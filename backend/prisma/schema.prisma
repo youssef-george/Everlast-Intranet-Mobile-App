@@ -1,0 +1,160 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// SQLite doesn't support enums, so we use String with default values
+// Valid values for role: SUPER_ADMIN, ADMIN, EMPLOYEE
+// Valid values for accountState: ACTIVE, DEACTIVATED
+// Valid values for attachmentType: IMAGE, VIDEO, PDF, WORD, OTHER
+
+model User {
+  id              String        @id @default(uuid())
+  name            String
+  email           String        @unique
+  phone           String?
+  jobTitle        String
+  department      String
+  role            String        @default("EMPLOYEE")
+  accountState    String        @default("ACTIVE")
+  profilePicture  String?
+  isOnline        Boolean       @default(false)
+  lastSeen        DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  sentMessages    Message[]     @relation("SentMessages")
+  receivedMessages Message[]    @relation("ReceivedMessages")
+  groupMemberships GroupMember[]
+  createdGroups   Group[]       @relation("CreatedGroups")
+  reactions       Reaction[]
+  typingIndicators TypingIndicator[]
+  notifications   Notification[]
+}
+
+model Message {
+  id              String        @id @default(uuid())
+  content         String?
+  senderId        String
+  receiverId      String?
+  groupId         String?
+  replyToId       String?
+  isPinned        Boolean       @default(false)
+  isDeleted       Boolean       @default(false)
+  deletedFor      String?       // JSON array of user IDs who deleted this message
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  deliveredAt     DateTime?
+  seenAt          DateTime?
+
+  // Relations
+  sender          User          @relation("SentMessages", fields: [senderId], references: [id])
+  receiver        User?         @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  group           Group?        @relation(fields: [groupId], references: [id])
+  replyTo         Message?      @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies         Message[]     @relation("MessageReplies")
+  attachments     Attachment[]
+  reactions       Reaction[]
+  voiceNote       VoiceNote?
+}
+
+model Group {
+  id              String        @id @default(uuid())
+  name            String
+  picture         String?
+  createdById     String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  createdBy       User          @relation("CreatedGroups", fields: [createdById], references: [id])
+  members         GroupMember[]
+  messages        Message[]
+}
+
+model GroupMember {
+  id              String        @id @default(uuid())
+  groupId         String
+  userId          String
+  role            String        @default("member") // "admin" or "member"
+  joinedAt        DateTime      @default(now())
+
+  // Relations
+  group           Group         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+}
+
+model Attachment {
+  id              String          @id @default(uuid())
+  messageId       String
+  type            String
+  url             String
+  filename        String
+  size            Int
+  createdAt       DateTime        @default(now())
+
+  // Relations
+  message         Message         @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}
+
+model Reaction {
+  id              String        @id @default(uuid())
+  messageId       String
+  userId          String
+  emoji           String
+  createdAt       DateTime      @default(now())
+
+  // Relations
+  message         Message       @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+}
+
+model VoiceNote {
+  id              String        @id @default(uuid())
+  messageId       String        @unique
+  url             String
+  duration        Int           // in seconds
+  createdAt       DateTime      @default(now())
+
+  // Relations
+  message         Message       @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}
+
+model TypingIndicator {
+  id              String        @id @default(uuid())
+  userId          String
+  chatId          String        // userId or groupId
+  isGroup         Boolean       @default(false)
+  timestamp       DateTime      @default(now())
+
+  // Relations
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id              String        @id @default(uuid())
+  userId          String
+  type            String        // MESSAGE, REPLY, MENTION, GROUP_ADD, GROUP_REMOVE, SYSTEM
+  title           String
+  content         String
+  isRead          Boolean       @default(false)
+  link            String?       // URL to navigate to (e.g., /chats/:id)
+  createdAt       DateTime      @default(now())
+
+  // Relations
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}

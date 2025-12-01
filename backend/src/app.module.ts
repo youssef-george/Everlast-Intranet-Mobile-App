@@ -1,0 +1,15 @@
+import { Module } from '@nestjs/common';
+import { UsersModule } from './modules/users/users.module';
+import { ChatModule } from './modules/chat/chat.module';
+import { GroupsModule } from './modules/groups/groups.module';
+import { FilesModule } from './modules/files/files.module';
+import { SearchModule } from './modules/search/search.module';
+import { DepartmentsModule } from './modules/departments/departments.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { PrismaService } from './common/prisma.service';
+
+@Module({
+    imports: [UsersModule, ChatModule, GroupsModule, FilesModule, SearchModule, DepartmentsModule, NotificationsModule],
+    providers: [PrismaService],
+})
+export class AppModule { }
