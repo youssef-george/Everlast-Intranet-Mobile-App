@@ -2,8 +2,7 @@
 # Explicitly configure for Node.js monorepo deployment
 
 [phases.setup]
-nixPkgs = ["nodejs-22_x", "openssl"]
-
+   nixPkgs = ["nodejs_22", "openssl"]
 [phases.install]
 cmds = [
   "npm install --prefix backend --legacy-peer-deps",
