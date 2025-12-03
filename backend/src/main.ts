@@ -4,6 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { existsSync } from 'fs';
+import { Request, Response } from 'express';
 
 console.log('🚀 Bootstrap function called');
 console.log('📦 Environment:', process.env.NODE_ENV);
@@ -23,11 +24,11 @@ async function bootstrap() {
     });
 
     // Add health check before API prefix (for Coolify/load balancers)
-    app.getHttpAdapter().get('/health', (req, res) => {
+    app.getHttpAdapter().get('/health', (req: Request, res: Response) => {
         res.json({ status: 'ok', timestamp: new Date().toISOString() });
     });
     
-    app.getHttpAdapter().get('/', (req, res) => {
+    app.getHttpAdapter().get('/', (req: Request, res: Response) => {
         res.json({ status: 'ok', service: 'Everlast Intranet API', timestamp: new Date().toISOString() });
     });
 
