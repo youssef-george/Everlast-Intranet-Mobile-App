@@ -243,7 +243,8 @@ export class GroupsService {
     }
 
     async leaveGroup(groupId: string, userId: string) {
-        return this.removeMember(groupId, userId);
+        // User is removing themselves, so they are both the target and the requester
+        return this.removeMember(groupId, userId, userId);
     }
 
     async deleteGroup(id: string, requesterId: string) {
