@@ -23,21 +23,21 @@ async function bootstrap() {
         exposedHeaders: ['Content-Type', 'Authorization'],
     });
 
-    // Set global API prefix
-    app.setGlobalPrefix('api');
-
-    // Add health check routes AFTER prefix (accessible at /health and /)
+    // Add health check routes BEFORE global prefix (accessible at /health and /)
     // These bypass the API prefix for load balancer health checks
-    const httpAdapter = app.getHttpAdapter();
-    httpAdapter.get('/health', (req: Request, res: Response) => {
+    const expressApp = app.getHttpAdapter().getInstance();
+    expressApp.get('/health', (req: Request, res: Response) => {
         console.log('🏥 Health check endpoint hit');
         res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
     });
     
-    httpAdapter.get('/', (req: Request, res: Response) => {
+    expressApp.get('/', (req: Request, res: Response) => {
         console.log('🏠 Root endpoint hit');
         res.status(200).json({ status: 'ok', service: 'Everlast Intranet API', timestamp: new Date().toISOString() });
     });
+
+    // Set global API prefix
+    app.setGlobalPrefix('api');
 
     // Enable validation
     app.useGlobalPipes(
