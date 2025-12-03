@@ -20,7 +20,7 @@ cmds = [
 ]
 
 [start]
-cmd = "cd backend && npx prisma db push --skip-generate --accept-data-loss && node dist/main.js"
+cmd = "cd backend && (npx prisma db push --skip-generate --accept-data-loss || echo 'Database sync warning') && node dist/main.js"
 
 [variables]
 NODE_ENV = "production"

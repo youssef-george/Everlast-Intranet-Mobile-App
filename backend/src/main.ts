@@ -5,7 +5,12 @@ import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { existsSync } from 'fs';
 
+console.log('🚀 Bootstrap function called');
+console.log('📦 Environment:', process.env.NODE_ENV);
+console.log('🔌 PORT:', process.env.PORT);
+
 async function bootstrap() {
+    console.log('🔧 Creating NestJS application...');
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
     // Enable CORS for frontend (including network access and Safari)
@@ -75,6 +80,10 @@ async function bootstrap() {
     }
 
     const port = process.env.PORT || 3001;
+    console.log(`🔧 Starting server on port: ${port}`);
+    console.log(`📂 Current working directory: ${process.cwd()}`);
+    console.log(`📂 __dirname: ${__dirname}`);
+    
     await app.listen(port, '0.0.0.0');
     
     // Get network interfaces to show actual IP
@@ -98,7 +107,25 @@ async function bootstrap() {
     
     console.log(`🚀 Server running on http://localhost:${port}`);
     console.log(`🌐 Network access: http://${localIP}:${port}`);
-    console.log(`📱 Share this URL: http://${localIP}:5173`);
+    console.log(`✅ Application is ready to accept connections`);
 }
 
-bootstrap();
+console.log('📝 Starting bootstrap process...');
+
+bootstrap().catch((error) => {
+    console.error('❌ Fatal error during application startup:', error);
+    console.error('Error name:', error?.name);
+    console.error('Error message:', error?.message);
+    console.error('Stack trace:', error?.stack);
+    process.exit(1);
+});
+
+// Keep process alive and log unhandled errors
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception:', error);
+    process.exit(1);
+});

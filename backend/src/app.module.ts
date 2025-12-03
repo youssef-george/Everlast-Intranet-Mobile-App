@@ -7,9 +7,11 @@ import { SearchModule } from './modules/search/search.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PrismaService } from './common/prisma.service';
+import { HealthController } from './health.controller';
 
 @Module({
     imports: [UsersModule, ChatModule, GroupsModule, FilesModule, SearchModule, DepartmentsModule, NotificationsModule],
+    controllers: [HealthController],
     providers: [PrismaService],
 })
 export class AppModule { }
