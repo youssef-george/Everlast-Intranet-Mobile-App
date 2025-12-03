@@ -21,7 +21,7 @@ cmds = [
 ]
 
 [start]
-cmd = "cd /app/backend 2>/dev/null || cd backend && pwd && echo '📦 Listing files:' && ls -la && echo '📁 Checking dist:' && (ls -la dist/ 2>/dev/null || echo '❌ dist not found') && echo '🔍 Searching for main.js:' && find /app -name 'main.js' -type f 2>/dev/null | head -5 || find . -name 'main.js' -type f 2>/dev/null | head -5 && echo '🔄 Database sync...' && (npx prisma db push --skip-generate --accept-data-loss 2>&1 || true) && echo '🚀 Starting app...' && if [ -f dist/main.js ]; then node dist/main.js; elif [ -f /app/backend/dist/main.js ]; then cd /app/backend && node dist/main.js; else echo '❌ Cannot find main.js!' && exit 1; fi"
+cmd = "cd backend && echo '🔍 Checking for main.js in dist:' && (ls -la dist/src/main.js 2>/dev/null && echo '✅ Found at dist/src/main.js') || (ls -la dist/main.js 2>/dev/null && echo '✅ Found at dist/main.js') || (echo '❌ main.js not found! Listing dist/src:' && ls -la dist/src/ 2>/dev/null || echo 'dist/src does not exist') && echo '🔄 Database sync...' && (npx prisma db push --skip-generate --accept-data-loss 2>&1 || true) && echo '🚀 Starting app...' && if [ -f dist/src/main.js ]; then node dist/src/main.js; elif [ -f dist/main.js ]; then node dist/main.js; else echo '❌ Cannot find main.js! Build may have failed.' && exit 1; fi"
 
 [variables]
 NODE_ENV = "production"
