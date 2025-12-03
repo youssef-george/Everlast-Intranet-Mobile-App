@@ -43,7 +43,7 @@ const EmployeeProfile: React.FC = () => {
     });
 
     const startChat = () => {
-        navigate(`/chats/${id}`);
+        navigate(`/messages/${id}`);
     };
 
     if (isLoading || !user) {
@@ -53,7 +53,7 @@ const EmployeeProfile: React.FC = () => {
     const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
 
     return (
-        <div className="flex flex-col h-full bg-gray-50 dark:bg-dark-bg overflow-y-auto pb-20 md:pb-0">
+        <div className="flex flex-col h-full bg-gray-50 dark:bg-dark-bg overflow-y-auto pb-20 md:pb-0 pt-16">
             {/* Header Image */}
             <div className="h-32 gradient-primary"></div>
 

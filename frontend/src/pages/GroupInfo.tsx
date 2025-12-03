@@ -99,7 +99,7 @@ const GroupInfo: React.FC = () => {
     );
 
     return (
-        <div className="flex flex-col h-full bg-secondary dark:bg-dark-bg overflow-y-auto">
+        <div className="flex flex-col h-full bg-secondary dark:bg-dark-bg overflow-y-auto pt-16">
             <div className="bg-white dark:bg-dark-paper p-6 flex flex-col items-center shadow-sm">
                 {group.picture ? (
                     <img

@@ -8,6 +8,7 @@ interface AuthContextType {
     isLoading: boolean;
     loginAs: (userId: string) => Promise<void>;
     logout: () => void;
+    refreshUser: () => Promise<void>;
     showUserSelector: boolean;
     setShowUserSelector: (show: boolean) => void;
 }
@@ -57,6 +58,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const refreshUser = async () => {
+        if (currentUser) {
+            try {
+                const response = await api.get(`/users/${currentUser.id}`);
+                setCurrentUser(response.data);
+            } catch (error) {
+                console.error('Failed to refresh user', error);
+            }
+        }
+    };
+
     const logout = async () => {
         if (currentUser) {
             try {
@@ -77,6 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isLoading, 
             loginAs, 
             logout,
+            refreshUser,
             showUserSelector,
             setShowUserSelector
         }}>

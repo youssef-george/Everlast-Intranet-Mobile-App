@@ -1,0 +1,27 @@
+# Nixpacks configuration for Everlast Intranet Monorepo
+# Explicitly configure for Node.js monorepo deployment
+
+[phases.setup]
+nixPkgs = ["nodejs-22_x", "openssl"]
+
+[phases.install]
+cmds = [
+  "npm install --prefix backend --legacy-peer-deps",
+  "npm install --prefix frontend --legacy-peer-deps",
+  "cd backend && npx prisma generate"
+]
+
+[phases.build]
+cmds = [
+  "cd frontend && npm run build",
+  "cd backend && npm run build",
+  "mkdir -p backend/public",
+  "cp -r frontend/dist/* backend/public/",
+  "mkdir -p backend/uploads"
+]
+
+[start]
+cmd = "cd backend && npx prisma migrate deploy && node dist/main.js"
+
+[variables]
+NODE_ENV = "production"

@@ -8,6 +8,7 @@ import { NotificationsProvider } from './context/NotificationsContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import UserSelector from './components/UserSelector';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 import MembersDirectory from './pages/MembersDirectory';
 import EmployeeProfile from './pages/EmployeeProfile';
 import Chats from './pages/Chats';
@@ -122,6 +123,11 @@ function AppRoutes() {
             <Profile />
           </ProtectedRoute>
         } />
+        <Route path="profile/:id" element={
+          <ProtectedRoute>
+            <EmployeeProfile />
+          </ProtectedRoute>
+        } />
       </Route>
     </Routes>
   );
@@ -137,6 +143,7 @@ function App() {
               <NotificationsProvider>
                 <Router>
                   <AppRoutes />
+                  <PWAInstallPrompt />
                 </Router>
               </NotificationsProvider>
             </SocketProvider>

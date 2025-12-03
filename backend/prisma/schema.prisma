@@ -6,11 +6,11 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// SQLite doesn't support enums, so we use String with default values
+// Using String with default values for enums
 // Valid values for role: SUPER_ADMIN, ADMIN, EMPLOYEE
 // Valid values for accountState: ACTIVE, DEACTIVATED
 // Valid values for attachmentType: IMAGE, VIDEO, PDF, WORD, OTHER
@@ -20,6 +20,7 @@ model User {
   name            String
   email           String        @unique
   phone           String?
+  avayaNumber     String?
   jobTitle        String
   department      String
   role            String        @default("EMPLOYEE")
@@ -33,6 +34,8 @@ model User {
   // Relations
   sentMessages    Message[]     @relation("SentMessages")
   receivedMessages Message[]    @relation("ReceivedMessages")
+  // TODO: Uncomment after migration
+  // forwardedMessages Message[]   @relation("ForwardedMessages")
   groupMemberships GroupMember[]
   createdGroups   Group[]       @relation("CreatedGroups")
   reactions       Reaction[]
@@ -41,29 +44,37 @@ model User {
 }
 
 model Message {
-  id              String        @id @default(uuid())
-  content         String?
-  senderId        String
-  receiverId      String?
-  groupId         String?
-  replyToId       String?
-  isPinned        Boolean       @default(false)
-  isDeleted       Boolean       @default(false)
-  deletedFor      String?       // JSON array of user IDs who deleted this message
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  deliveredAt     DateTime?
-  seenAt          DateTime?
+  id                  String        @id @default(uuid())
+  content             String?
+  senderId            String
+  receiverId          String?
+  groupId             String?
+  replyToId           String?
+  // TODO: Uncomment after running migration to add forwarded message support
+  // forwardedFromId     String?       // ID of the user who originally sent the forwarded message
+  // forwardedFromMessageId String?    // ID of the original message that was forwarded
+  isPinned            Boolean       @default(false)
+  isDeleted           Boolean       @default(false)
+  deletedFor          String?       // JSON array of user IDs who deleted this message
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  deliveredAt         DateTime?
+  seenAt              DateTime?
 
   // Relations
-  sender          User          @relation("SentMessages", fields: [senderId], references: [id])
-  receiver        User?         @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  group           Group?        @relation(fields: [groupId], references: [id])
-  replyTo         Message?      @relation("MessageReplies", fields: [replyToId], references: [id])
-  replies         Message[]     @relation("MessageReplies")
-  attachments     Attachment[]
-  reactions       Reaction[]
-  voiceNote       VoiceNote?
+  sender              User          @relation("SentMessages", fields: [senderId], references: [id])
+  receiver            User?         @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  group               Group?        @relation(fields: [groupId], references: [id])
+  replyTo             Message?      @relation("MessageReplies", fields: [replyToId], references: [id])
+  // TODO: Uncomment after migration
+  // forwardedFrom       User?         @relation("ForwardedMessages", fields: [forwardedFromId], references: [id])
+  // forwardedFromMessage Message?      @relation("ForwardedFromMessages", fields: [forwardedFromMessageId], references: [id])
+  replies             Message[]     @relation("MessageReplies")
+  // TODO: Uncomment after migration
+  // forwardedMessages   Message[]     @relation("ForwardedFromMessages")
+  attachments         Attachment[]
+  reactions           Reaction[]
+  voiceNote           VoiceNote?
 }
 
 model Group {

@@ -37,6 +37,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose }) 
 
     const createUserMutation = useMutation({
         mutationFn: async (data: any) => {
+            console.log('Creating user with data:', { ...data, requesterId: currentUser?.id });
             let profilePictureUrl = '';
             
             if (profilePicture) {
@@ -53,12 +54,19 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose }) 
                 profilePicture: profilePictureUrl,
                 requesterId: currentUser?.id, // Include requester ID for permission check
             });
+            console.log('User created successfully:', response.data);
             return response.data;
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
+            console.log('Employee added successfully, refreshing lists...');
             queryClient.invalidateQueries({ queryKey: ['users'] });
+            queryClient.invalidateQueries({ queryKey: ['departments'] });
             onClose();
             resetForm();
+        },
+        onError: (error: any) => {
+            console.error('Failed to create employee:', error);
+            alert(`Failed to add employee: ${error.response?.data?.message || error.message}`);
         },
     });
 
@@ -190,10 +198,13 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose }) 
                         </label>
                         <div className="flex gap-2">
                             <select
-                                value={formData.department}
-                                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                                value={formData.department && !newDepartment ? formData.department : ''}
+                                onChange={(e) => {
+                                    setNewDepartment('');
+                                    setFormData({ ...formData, department: e.target.value });
+                                }}
                                 className="input-field flex-1"
-                                required
+                                required={!newDepartment}
                             >
                                 <option value="">Select Department</option>
                                 {departments.map((dept) => (
@@ -209,14 +220,17 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose }) 
                                     value={newDepartment}
                                     onChange={(e) => {
                                         setNewDepartment(e.target.value);
-                                        if (e.target.value) {
-                                            setFormData({ ...formData, department: e.target.value });
-                                        }
+                                        setFormData({ ...formData, department: e.target.value || '' });
                                     }}
                                     className="input-field flex-1"
                                 />
                             )}
                         </div>
+                        {newDepartment && (
+                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                                ✓ Creating new department: "{newDepartment}"
+                            </p>
+                        )}
                     </div>
 
                     <div>

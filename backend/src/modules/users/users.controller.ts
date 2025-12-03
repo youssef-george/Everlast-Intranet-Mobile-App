@@ -27,7 +27,34 @@ export class UsersController {
 
     @Post()
     async createUser(@Body() dto: CreateUserDto & { requesterId?: string }) {
-        return this.usersService.createUser(dto, dto.requesterId);
+        try {
+            console.log('📝 Creating user:', { 
+                email: dto.email, 
+                name: dto.name, 
+                department: dto.department, 
+                requesterId: dto.requesterId 
+            });
+            
+            const user = await this.usersService.createUser(dto, dto.requesterId);
+            console.log('✅ User created successfully:', user.id);
+            return user;
+        } catch (error: any) {
+            console.error('❌ Controller error:', error.message);
+            console.error('❌ Stack:', error.stack);
+            
+            // Return user-friendly error messages
+            if (error.message.includes('Requester not found')) {
+                throw new Error('Authentication failed. Please log out and log back in.');
+            }
+            if (error.message.includes('Email already exists')) {
+                throw new Error('This email is already registered in the system.');
+            }
+            if (error.message.includes('permission')) {
+                throw new Error('You do not have permission to create employees.');
+            }
+            
+            throw error;
+        }
     }
 
     @Patch(':id')

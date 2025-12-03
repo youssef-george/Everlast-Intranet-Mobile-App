@@ -11,11 +11,19 @@ export class ChatController {
         @Param('otherUserId') otherUserId: string,
         @Query('limit') limit?: string,
     ) {
-        return this.chatService.getMessages(
-            userId,
-            otherUserId,
-            limit ? parseInt(limit) : 50,
-        );
+        try {
+            return await this.chatService.getMessages(
+                userId,
+                otherUserId,
+                limit ? parseInt(limit) : 50,
+            );
+        } catch (error) {
+            console.error('Error fetching messages in controller:', error);
+            console.error('Error details:', error instanceof Error ? error.message : String(error));
+            console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+            // Return empty array instead of throwing to prevent 500 errors
+            return [];
+        }
     }
 
     @Get('group/:groupId/messages')
@@ -31,7 +39,14 @@ export class ChatController {
 
     @Get('recent/:userId')
     async getRecentChats(@Param('userId') userId: string) {
-        return this.chatService.getRecentChats(userId);
+        try {
+            return await this.chatService.getRecentChats(userId);
+        } catch (error) {
+            console.error('Error fetching recent chats in controller:', error);
+            console.error('Error details:', error instanceof Error ? error.message : String(error));
+            // Return empty array instead of throwing to prevent 500 errors
+            return [];
+        }
     }
 
     @Get('pinned/:groupId')

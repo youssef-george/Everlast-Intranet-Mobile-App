@@ -44,24 +44,38 @@ if errorlevel 1 (
 )
 
 echo.
-echo [3/4] Checking database...
-if not exist "prisma\dev.db" (
-    echo Running database migrations...
-    call npm run prisma:migrate
-    if errorlevel 1 (
-        echo ERROR: Failed to run migrations
-        pause
-        exit /b 1
-    )
+echo [3/4] Verifying database connection...
+call npx prisma db push --skip-generate
+if errorlevel 1 (
+    echo WARNING: Database push failed, but continuing...
 ) else (
-    echo Database exists
+    echo Database schema synchronized
 )
 
 echo.
 echo [4/4] Starting server...
 echo.
+
+REM Get local IP address
+for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /c:"IPv4"') do (
+    set LOCAL_IP=%%a
+    goto :found
+)
+
+:found
+set LOCAL_IP=%LOCAL_IP:~1%
+
 echo ========================================
-echo   Server starting on http://localhost:3001
+echo   Backend Server Starting
+echo ========================================
+echo.
+echo Local Access:
+echo   http://localhost:3001
+echo.
+echo Network Access:
+echo   http://%LOCAL_IP%:3001
+echo.
+echo ========================================
 echo   Press Ctrl+C to stop the server
 echo ========================================
 echo.

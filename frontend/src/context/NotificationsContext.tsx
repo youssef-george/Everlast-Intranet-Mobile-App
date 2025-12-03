@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import type { Notification } from '../types';
@@ -22,20 +22,61 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     const queryClient = useQueryClient();
     const [permission, setPermission] = useState<NotificationPermission>('default');
 
-    // Check notification permission on mount
-    useEffect(() => {
-        if ('Notification' in window) {
-            setPermission(Notification.permission);
+    // Request permission function (memoized)
+    const requestPermission = useCallback(async (): Promise<NotificationPermission> => {
+        if (!('Notification' in window)) {
+            return 'denied';
         }
+
+        if (Notification.permission === 'granted') {
+            setPermission('granted');
+            return 'granted';
+        }
+
+        if (Notification.permission === 'denied') {
+            setPermission('denied');
+            return 'denied';
+        }
+
+        const result = await Notification.requestPermission();
+        setPermission(result);
+        return result;
     }, []);
+
+    // Check and automatically request notification permission on mount and when user logs in
+    useEffect(() => {
+        if ('Notification' in window && currentUser) {
+            const currentPermission = Notification.permission;
+            setPermission(currentPermission);
+            
+            // Automatically request permission if not already granted or denied
+            if (currentPermission === 'default') {
+                // Small delay to ensure user sees the app first
+                setTimeout(() => {
+                    requestPermission().catch(console.error);
+                }, 1000);
+            } else if (currentPermission === 'granted') {
+                // Ensure permission state is updated
+                setPermission('granted');
+            }
+        }
+    }, [currentUser, requestPermission]);
 
     // Fetch notifications
     const { data: notifications = [] } = useQuery({
         queryKey: ['notifications', currentUser?.id],
         queryFn: async () => {
             if (!currentUser) return [];
-            const response = await api.get<Notification[]>(`/notifications?userId=${currentUser.id}`);
-            return response.data;
+            try {
+                const response = await api.get<Notification[]>(`/notifications?userId=${currentUser.id}`);
+                return response.data;
+            } catch (error: any) {
+                // Handle 404 gracefully - notifications endpoint might not exist
+                if (error.response?.status === 404) {
+                    return [];
+                }
+                throw error;
+            }
         },
         enabled: !!currentUser,
         refetchInterval: 30000, // Refetch every 30 seconds
@@ -46,8 +87,16 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         queryKey: ['notifications-unread', currentUser?.id],
         queryFn: async () => {
             if (!currentUser) return { count: 0 };
-            const response = await api.get<{ count: number }>(`/notifications/unread-count?userId=${currentUser.id}`);
-            return response.data;
+            try {
+                const response = await api.get<{ count: number }>(`/notifications/unread-count?userId=${currentUser.id}`);
+                return response.data;
+            } catch (error: any) {
+                // Handle 404 gracefully - notifications endpoint might not exist
+                if (error.response?.status === 404) {
+                    return { count: 0 };
+                }
+                throw error;
+            }
         },
         enabled: !!currentUser,
         refetchInterval: 30000,
@@ -57,18 +106,34 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Listen for real-time notifications
     useEffect(() => {
-        if (!socket) return;
+        if (!socket || !currentUser) return;
 
         const handleNewNotification = (data: { type: string; title: string; content: string }) => {
+            // Check permission again in case it changed
+            const currentPermission = 'Notification' in window ? Notification.permission : 'denied';
+            
             // Show browser notification if permission granted
-            if (permission === 'granted') {
-                new Notification(data.title, {
-                    body: data.content,
-                    icon: '/pwa-192x192.png',
-                    badge: '/pwa-192x192.png',
-                    tag: 'everlast-notification',
-                    requireInteraction: false,
-                });
+            if (currentPermission === 'granted') {
+                try {
+                    new Notification(data.title, {
+                        body: data.content,
+                        icon: '/icon.png',
+                        badge: '/icon.png',
+                        tag: 'everlast-notification',
+                        requireInteraction: false,
+                        silent: false,
+                    });
+                } catch (error) {
+                    console.error('Failed to show notification:', error);
+                }
+            } else if (currentPermission === 'default') {
+                // Try to request permission again if it's still default
+                // Note: requestPermission is available via context, but we'll check permission directly here
+                if ('Notification' in window) {
+                    Notification.requestPermission().then((result) => {
+                        setPermission(result);
+                    }).catch(console.error);
+                }
             }
 
             // Invalidate queries to refetch notifications
@@ -124,26 +189,6 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const deleteNotification = (id: string) => {
         deleteNotificationMutation.mutate(id);
-    };
-
-    const requestPermission = async (): Promise<NotificationPermission> => {
-        if (!('Notification' in window)) {
-            return 'denied';
-        }
-
-        if (Notification.permission === 'granted') {
-            setPermission('granted');
-            return 'granted';
-        }
-
-        if (Notification.permission === 'denied') {
-            setPermission('denied');
-            return 'denied';
-        }
-
-        const result = await Notification.requestPermission();
-        setPermission(result);
-        return result;
     };
 
     return (

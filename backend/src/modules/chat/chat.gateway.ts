@@ -14,9 +14,12 @@ import { NotificationsService } from '../notifications/notifications.service';
 
 @WebSocketGateway({
     cors: {
-        origin: ['http://localhost:5173', 'http://localhost:3000'],
+        origin: true, // Allow all origins for network access and Safari compatibility
         credentials: true,
+        methods: ['GET', 'POST'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
     },
+    transports: ['websocket', 'polling'], // Support both transports for Safari compatibility
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
@@ -67,115 +70,313 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
     }
 
-    @SubscribeMessage('sendMessage')
-    async handleSendMessage(
-        @MessageBody() data: SendMessageDto,
-        @ConnectedSocket() client: Socket,
-    ) {
-        const message = await this.chatService.sendMessage(data);
+    // Helper method to emit message to users (for file uploads)
+    async emitMessageToUsers(messageId: string, senderId: string, receiverId: string) {
+        try {
+            console.log('📤 Emitting message to users:', { messageId, senderId, receiverId });
 
-        // Get full message with all relations
-        const fullMessage = await this.prisma.message.findUnique({
-            where: { id: message.id },
-            include: {
-                sender: true,
-                receiver: true,
-                group: true,
-                replyTo: {
-                    include: {
-                        sender: true,
+            // Get full message with all relations
+            const fullMessage = await this.prisma.message.findUnique({
+                where: { id: messageId },
+                include: {
+                    sender: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            profilePicture: true,
+                            isOnline: true,
+                            accountState: true,
+                        },
+                    },
+                    receiver: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            profilePicture: true,
+                            isOnline: true,
+                            accountState: true,
+                        },
+                    },
+                    group: true,
+                    replyTo: {
+                        include: {
+                            sender: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    email: true,
+                                    profilePicture: true,
+                                },
+                            },
+                        },
+                    },
+                    attachments: true,
+                    voiceNote: true,
+                    reactions: {
+                        include: {
+                            user: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    email: true,
+                                    profilePicture: true,
+                                },
+                            },
+                        },
                     },
                 },
-                attachments: true,
-                voiceNote: true,
-                reactions: {
-                    include: {
-                        user: true,
-                    },
-                },
-            },
-        });
+            });
 
-        // Emit to receiver or group members
-        if (data.receiverId) {
-            const receiverSocketId = this.userSockets.get(data.receiverId);
+            if (!fullMessage) {
+                console.error('❌ Message not found:', messageId);
+                return;
+            }
+
+            // Emit to receiver
+            const receiverSocketId = this.userSockets.get(receiverId);
             if (receiverSocketId) {
                 this.server.to(receiverSocketId).emit('newMessage', fullMessage);
-                // Emit unread count update to receiver
+                console.log('✅ Message emitted to receiver');
+                
+                // Update unread count
                 const unreadCount = await this.prisma.message.count({
                     where: {
                         OR: [
-                            { senderId: data.senderId, receiverId: data.receiverId },
-                            { senderId: data.receiverId, receiverId: data.senderId },
+                            { senderId, receiverId },
+                            { senderId: receiverId, receiverId: senderId },
                         ],
-                        senderId: { not: data.receiverId },
+                        senderId: { not: receiverId },
                         seenAt: null,
                         isDeleted: false,
                     },
                 });
                 this.server.to(receiverSocketId).emit('unreadCountUpdate', {
-                    chatId: data.senderId,
+                    chatId: senderId,
                     unreadCount,
                 });
+                this.server.to(receiverSocketId).emit('refreshRecentChats');
+            } else {
+                console.log('⚠️ Receiver not connected');
             }
-            // Also emit to sender so they see their own message
-            client.emit('newMessage', fullMessage);
 
-            // Create notification for receiver (if not sending to self)
-            if (data.receiverId !== data.senderId) {
-                try {
-                    await this.notificationsService.createNotification({
-                        userId: data.receiverId,
-                        type: 'MESSAGE',
-                        title: `${fullMessage.sender.name}`,
-                        content: fullMessage.content || 'Sent an attachment',
-                        link: `/chats/${data.senderId}`,
-                    });
-                    // Emit notification to receiver
-                    if (receiverSocketId) {
-                        this.server.to(receiverSocketId).emit('newNotification', {
-                            type: 'MESSAGE',
-                            title: `${fullMessage.sender.name}`,
-                            content: fullMessage.content || 'Sent an attachment',
-                        });
-                    }
-                } catch (error) {
-                    console.error('Failed to create notification', error);
-                }
+            // Emit to sender
+            const senderSocketId = this.userSockets.get(senderId);
+            if (senderSocketId) {
+                this.server.to(senderSocketId).emit('messageSaved', fullMessage);
+                console.log('✅ Message save confirmation sent to sender');
             }
-        } else if (data.groupId) {
-            // Get group members
-            const groupMembers = await this.prisma.groupMember.findMany({
-                where: { groupId: data.groupId },
+        } catch (error) {
+            console.error('❌ Error emitting message to users:', error);
+        }
+    }
+
+    // Helper method to emit message to group (for file uploads)
+    async emitMessageToGroup(messageId: string, groupId: string, senderId: string) {
+        try {
+            console.log('📤 Emitting message to group:', { messageId, groupId, senderId });
+
+            // Get full message with all relations
+            const fullMessage = await this.prisma.message.findUnique({
+                where: { id: messageId },
+                include: {
+                    sender: true,
+                    receiver: true,
+                    group: true,
+                    replyTo: {
+                        include: {
+                            sender: true,
+                        },
+                    },
+                    attachments: true,
+                    voiceNote: true,
+                    reactions: {
+                        include: {
+                            user: true,
+                        },
+                    },
+                },
             });
 
+            if (!fullMessage) {
+                console.error('❌ Message not found:', messageId);
+                return;
+            }
+
+            // Get group members
+            const groupMembers = await this.prisma.groupMember.findMany({
+                where: { groupId },
+            });
+
+            // Emit to all group members
             groupMembers.forEach((member) => {
                 const socketId = this.userSockets.get(member.userId);
                 if (socketId) {
-                    this.server.to(socketId).emit('newMessage', fullMessage);
+                    if (member.userId === senderId) {
+                        // Send confirmation to sender
+                        this.server.to(socketId).emit('messageSaved', fullMessage);
+                    } else {
+                        // Send new message to other members
+                        this.server.to(socketId).emit('newMessage', fullMessage);
+                    }
                 }
             });
 
-            // Create notifications for group members (except sender)
-            const group = await this.prisma.group.findUnique({
-                where: { id: data.groupId },
+            console.log('✅ Message emitted to group members');
+        } catch (error) {
+            console.error('❌ Error emitting message to group:', error);
+        }
+    }
+
+    @SubscribeMessage('sendMessage')
+    async handleSendMessage(
+        @MessageBody() data: SendMessageDto,
+        @ConnectedSocket() client: Socket,
+    ) {
+        try {
+            console.log('📨 Received sendMessage event:', {
+                senderId: data.senderId,
+                receiverId: data.receiverId,
+                groupId: data.groupId,
+                content: data.content?.substring(0, 50),
+            });
+            
+            // Save message to database
+            const message = await this.chatService.sendMessage(data);
+            console.log('✅ Message saved to database:', message.id);
+
+            // Get full message with all relations
+            const fullMessage = await this.prisma.message.findUnique({
+                where: { id: message.id },
+                include: {
+                    sender: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            profilePicture: true,
+                            isOnline: true,
+                            accountState: true,
+                        },
+                    },
+                    receiver: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            profilePicture: true,
+                            isOnline: true,
+                            accountState: true,
+                        },
+                    },
+                    group: true,
+                    replyTo: {
+                        include: {
+                            sender: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    email: true,
+                                    profilePicture: true,
+                                },
+                            },
+                        },
+                    },
+                    // TODO: Forwarded fields - uncomment after migration
+                    // forwardedFrom: true,
+                    // forwardedFromMessage: {
+                    //     include: {
+                    //         sender: true,
+                    //         attachments: true,
+                    //         voiceNote: true,
+                    //     },
+                    // },
+                    attachments: true,
+                    voiceNote: true,
+                    reactions: {
+                        include: {
+                            user: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    email: true,
+                                    profilePicture: true,
+                                },
+                            },
+                        },
+                    },
+                },
             });
 
-            groupMembers.forEach(async (member) => {
-                if (member.userId !== data.senderId) {
+            // Emit to receiver or group members
+            if (data.receiverId) {
+                const receiverSocketId = this.userSockets.get(data.receiverId);
+                console.log('📤 Emitting message to receiver:', {
+                    receiverId: data.receiverId,
+                    receiverSocketId,
+                    messageId: fullMessage.id,
+                });
+                
+                if (receiverSocketId) {
+                    console.log(`📡 Sending newMessage event to receiver socket: ${receiverSocketId}`);
+                    this.server.to(receiverSocketId).emit('newMessage', fullMessage);
+                    console.log('✅ Message emitted to receiver socket:', {
+                        receiverId: data.receiverId,
+                        messageId: fullMessage.id,
+                        content: fullMessage.content?.substring(0, 50),
+                    });
+                    
+                    // Emit unread count update to receiver
+                    const unreadCount = await this.prisma.message.count({
+                        where: {
+                            OR: [
+                                { senderId: data.senderId, receiverId: data.receiverId },
+                                { senderId: data.receiverId, receiverId: data.senderId },
+                            ],
+                            senderId: { not: data.receiverId },
+                            seenAt: null,
+                            isDeleted: false,
+                        },
+                    });
+                    this.server.to(receiverSocketId).emit('unreadCountUpdate', {
+                        chatId: data.senderId,
+                        unreadCount,
+                    });
+                    console.log(`📊 Unread count update sent to receiver: ${unreadCount} unread messages`);
+                    
+                    // Also emit a refresh event to update the recent chats list
+                    this.server.to(receiverSocketId).emit('refreshRecentChats');
+                    console.log('🔄 Refresh recent chats event sent to receiver');
+                } else {
+                    console.log('⚠️ Receiver not connected, message saved to database but not delivered via socket');
+                    console.log('   Message will appear when receiver refreshes or reconnects');
+                    console.log('   Current connected users:', Array.from(this.userSockets.keys()));
+                }
+                
+                // Send confirmation to sender with 'messageSaved' event (not 'newMessage')
+                console.log('📤 Sending messageSaved confirmation to sender:', {
+                    senderId: data.senderId,
+                    messageId: fullMessage.id,
+                });
+                client.emit('messageSaved', fullMessage);
+                console.log('✅ Message save confirmation sent to sender');
+
+                // Create notification for receiver (if not sending to self)
+                if (data.receiverId !== data.senderId) {
                     try {
                         await this.notificationsService.createNotification({
-                            userId: member.userId,
+                            userId: data.receiverId,
                             type: 'MESSAGE',
-                            title: `${fullMessage.sender.name} in ${group?.name || 'Group'}`,
+                            title: `${fullMessage.sender.name}`,
                             content: fullMessage.content || 'Sent an attachment',
-                            link: `/groups/${data.groupId}`,
+                            link: `/chats/${data.senderId}`,
                         });
-                        const socketId = this.userSockets.get(member.userId);
-                        if (socketId) {
-                            this.server.to(socketId).emit('newNotification', {
+                        // Emit notification to receiver
+                        if (receiverSocketId) {
+                            this.server.to(receiverSocketId).emit('newNotification', {
                                 type: 'MESSAGE',
-                                title: `${fullMessage.sender.name} in ${group?.name || 'Group'}`,
+                                title: `${fullMessage.sender.name}`,
                                 content: fullMessage.content || 'Sent an attachment',
                             });
                         }
@@ -183,12 +384,69 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                         console.error('Failed to create notification', error);
                     }
                 }
-            });
-        }
+            } else if (data.groupId) {
+                // Get group members
+                const groupMembers = await this.prisma.groupMember.findMany({
+                    where: { groupId: data.groupId },
+                });
 
-        // Send back to sender as confirmation
-        client.emit('messageSent', fullMessage);
-        return fullMessage;
+                // Send messageSaved to sender
+                client.emit('messageSaved', fullMessage);
+                console.log('✅ Message save confirmation sent to sender (group)');
+
+                // Send newMessage to all group members
+                groupMembers.forEach((member) => {
+                    const socketId = this.userSockets.get(member.userId);
+                    if (socketId) {
+                        this.server.to(socketId).emit('newMessage', fullMessage);
+                    }
+                });
+
+                // Create notifications for group members (except sender)
+                const group = await this.prisma.group.findUnique({
+                    where: { id: data.groupId },
+                });
+
+                groupMembers.forEach(async (member) => {
+                    if (member.userId !== data.senderId) {
+                        try {
+                            await this.notificationsService.createNotification({
+                                userId: member.userId,
+                                type: 'MESSAGE',
+                                title: `${fullMessage.sender.name} in ${group?.name || 'Group'}`,
+                                content: fullMessage.content || 'Sent an attachment',
+                                link: `/groups/${data.groupId}`,
+                            });
+                            const socketId = this.userSockets.get(member.userId);
+                            if (socketId) {
+                                this.server.to(socketId).emit('newNotification', {
+                                    type: 'MESSAGE',
+                                    title: `${fullMessage.sender.name} in ${group?.name || 'Group'}`,
+                                    content: fullMessage.content || 'Sent an attachment',
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Failed to create notification', error);
+                        }
+                    }
+                });
+            }
+
+            // Return success response
+            console.log('✅ Message flow completed successfully');
+            return { success: true, messageId: fullMessage.id, message: fullMessage };
+        } catch (error) {
+            console.error('❌ Error in handleSendMessage:', error);
+            console.error('Error details:', error instanceof Error ? error.message : String(error));
+            
+            // Emit error to sender
+            client.emit('messageError', { 
+                error: error instanceof Error ? error.message : 'Failed to send message',
+                details: 'Message could not be saved or delivered'
+            });
+            
+            return { success: false, error: error instanceof Error ? error.message : 'Failed to send message' };
+        }
     }
 
     @SubscribeMessage('typing')

@@ -1,0 +1,22 @@
+{
+  "name": "everlast-intranet",
+  "version": "1.0.0",
+  "description": "Everlast Intranet PWA - Employee Communication Platform",
+  "private": true,
+  "engines": {
+    "node": "22.x",
+    "npm": "10.x"
+  },
+  "scripts": {
+    "build": "npm install --prefix backend --legacy-peer-deps && npm install --prefix frontend --legacy-peer-deps && cd backend && npx prisma generate && cd ../frontend && npm run build && cd ../backend && npm run build && mkdir -p public && cp -r ../frontend/dist/* public/",
+    "start": "cd backend && npx prisma migrate deploy && node dist/main.js"
+  },
+  "keywords": [
+    "intranet",
+    "pwa",
+    "employee-communication"
+  ],
+  "author": "Youssef George",
+  "license": "ISC",
+  "dependencies": {}
+}

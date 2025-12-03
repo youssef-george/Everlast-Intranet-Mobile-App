@@ -14,11 +14,14 @@ const Notifications: React.FC = () => {
     const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, requestPermission } = useNotifications();
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
-    // Request notification permission on mount
+    // Request notification permission on mount (if not already granted)
     useEffect(() => {
-        if ('Notification' in window && Notification.permission === 'default') {
-            // Auto-request permission when user visits notifications page
-            requestPermission();
+        if ('Notification' in window) {
+            const currentPermission = Notification.permission;
+            // Auto-request permission if default or denied (user might have changed browser settings)
+            if (currentPermission === 'default' || currentPermission === 'denied') {
+                requestPermission().catch(console.error);
+            }
         }
     }, [requestPermission]);
 
@@ -63,7 +66,7 @@ const Notifications: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col h-full bg-gray-50 dark:bg-dark-bg overflow-y-auto pb-20 md:pb-0">
+        <div className="flex flex-col h-full bg-gray-50 dark:bg-dark-bg overflow-y-auto pb-20 md:pb-0 pt-16">
             {/* Page Header */}
             <div className="p-8 bg-white dark:bg-dark-paper border-b border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between items-center mb-4">

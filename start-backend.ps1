@@ -16,10 +16,11 @@ if (-not (Test-Path "node_modules\.prisma")) {
     npm run prisma:generate
 }
 
-# Check if database exists, if not run migrations
-if (-not (Test-Path "prisma\dev.db")) {
-    Write-Host "Running database migrations..." -ForegroundColor Yellow
-    npm run prisma:migrate
+# Verify database connection and sync schema
+Write-Host "Verifying database connection..." -ForegroundColor Yellow
+npx prisma db push --skip-generate
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Warning: Database push failed, but continuing..." -ForegroundColor Yellow
 }
 
 # Start the development server

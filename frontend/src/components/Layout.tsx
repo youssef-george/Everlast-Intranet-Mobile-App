@@ -6,15 +6,26 @@ import BottomNav from './BottomNav';
 
 const Layout: React.FC = () => {
     const location = useLocation();
-    const isChatWindow = location.pathname.includes('/chats/') || (location.pathname.includes('/groups/') && !location.pathname.includes('/info'));
+    
+    // Check if we're in a chat window (hide bottom nav on mobile)
+    const isChatWindow = React.useMemo(() => {
+        const pathSegments = location.pathname.split('/').filter(Boolean);
+        return (
+            (pathSegments[0] === 'messages' && pathSegments.length > 1) || // /messages/:id
+            (pathSegments[0] === 'chats' && pathSegments.length > 1) ||     // /chats/:id
+            (pathSegments[0] === 'groups' && pathSegments.length > 1 && pathSegments[pathSegments.length - 1] !== 'info') // /groups/:id (not /groups/:id/info)
+        );
+    }, [location.pathname]);
 
     return (
-        <div className="flex flex-col h-screen bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-dark-text overflow-hidden">
-            {/* Fixed Header */}
-            <Header />
+        <div className="flex flex-col bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-dark-text overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
+            {/* Fixed Header - Hidden on mobile when in chat */}
+            <div className={isChatWindow ? 'hidden md:block' : ''}>
+                <Header />
+            </div>
 
             {/* Main Container */}
-            <div className="flex flex-1 overflow-hidden mt-16">
+            <div className={`flex flex-1 overflow-hidden ${isChatWindow ? '' : 'mobile-content-offset'}`}>
                 {/* Desktop Sidebar */}
                 <Sidebar />
 
@@ -24,7 +35,7 @@ const Layout: React.FC = () => {
                 </main>
             </div>
 
-            {/* Mobile Bottom Navigation */}
+            {/* Mobile Bottom Navigation - Hidden in chat windows */}
             {!isChatWindow && (
                 <div className="block md:hidden">
                     <BottomNav />

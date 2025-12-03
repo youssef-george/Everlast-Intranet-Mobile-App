@@ -19,13 +19,28 @@ const UserSelector: React.FC<UserSelectorProps> = ({ onSelect, currentUserId }) 
             try {
                 const response = await api.get<User[]>('/users?includeDeactivated=true');
                 return response.data;
-            } catch (err) {
-                console.error('Failed to fetch users:', err);
+            } catch (err: any) {
+                // Don't log connection errors or 404s (backend might not be running or endpoint missing)
+                if (err.code !== 'ERR_NETWORK' && 
+                    err.code !== 'ECONNREFUSED' && 
+                    err.response?.status !== 404) {
+                    console.error('Failed to fetch users:', err);
+                }
                 throw err;
             }
         },
         retry: 2,
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     });
+
+    // Check if error is a connection error or 404 (backend issue)
+    const isConnectionError = error && (
+        (error as any)?.code === 'ERR_NETWORK' ||
+        (error as any)?.code === 'ECONNREFUSED' ||
+        (error as any)?.response?.status === 404 ||
+        (error as any)?.message?.includes('Network Error') ||
+        (error as any)?.message?.includes('Failed to fetch')
+    );
 
     const filteredUsers = users.filter((user) =>
         user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -73,19 +88,34 @@ const UserSelector: React.FC<UserSelectorProps> = ({ onSelect, currentUserId }) 
                 <div className="flex-1 overflow-y-auto p-2">
                     {error ? (
                         <div className="text-center py-8 px-4">
-                            <div className="text-red-500 mb-4">
-                                <p className="text-lg font-semibold mb-2">⚠️ Backend Server Not Running</p>
-                                <p className="text-sm">Unable to connect to backend at http://localhost:3001</p>
-                            </div>
-                            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 text-left text-sm text-yellow-800 dark:text-yellow-200">
-                                <p className="font-semibold mb-2">To start the backend server:</p>
-                                <ol className="list-decimal list-inside space-y-1 ml-2">
-                                    <li>Open a terminal in the <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">backend</code> folder</li>
-                                    <li>Run: <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">npm run start:dev</code></li>
-                                    <li>Wait for the server to start on port 3001</li>
-                                    <li>Refresh this page</li>
-                                </ol>
-                            </div>
+                            {isConnectionError ? (
+                                <>
+                                    <div className="text-red-500 mb-4">
+                                        <p className="text-lg font-semibold mb-2">⚠️ Backend Server Not Running</p>
+                                        <p className="text-sm">Unable to connect to backend server</p>
+                                    </div>
+                                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 text-left text-sm text-yellow-800 dark:text-yellow-200">
+                                        <p className="font-semibold mb-2">To start the backend server:</p>
+                                        <ol className="list-decimal list-inside space-y-1 ml-2">
+                                            <li>Open a terminal in the <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">backend</code> folder</li>
+                                            <li>Run: <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">npm run start:dev</code></li>
+                                            <li>Wait for the server to start on port 3001</li>
+                                            <li>Refresh this page</li>
+                                        </ol>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="text-red-500">
+                                    <p className="text-lg font-semibold mb-2">⚠️ Error Loading Users</p>
+                                    <p className="text-sm">{(error as any)?.response?.data?.message || (error as any)?.message || 'An error occurred while loading users'}</p>
+                                    <button
+                                        onClick={() => window.location.reload()}
+                                        className="mt-4 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors"
+                                    >
+                                        Retry
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ) : isLoading ? (
                         <div className="text-center py-8 text-gray-500">Loading users...</div>

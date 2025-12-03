@@ -14,6 +14,7 @@ export interface User {
     name: string;
     email: string;
     phone?: string;
+    avayaNumber?: string;
     jobTitle: string;
     department: string;
     role: string; // Using string to match backend response
@@ -32,6 +33,8 @@ export interface Message {
     receiverId?: string;
     groupId?: string;
     replyToId?: string;
+    forwardedFromId?: string; // ID of the user who originally sent the forwarded message
+    forwardedFromMessageId?: string; // ID of the original message that was forwarded
     isPinned: boolean;
     isDeleted: boolean;
     deletedFor?: string; // JSON array of user IDs who deleted this message
@@ -44,6 +47,8 @@ export interface Message {
     sender?: User;
     receiver?: User;
     replyTo?: Message;
+    forwardedFrom?: User; // User who originally sent the forwarded message
+    forwardedFromMessage?: Message; // Original message that was forwarded
     attachments?: Attachment[];
     reactions?: Reaction[];
     voiceNote?: VoiceNote;

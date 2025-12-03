@@ -7,6 +7,8 @@ interface ReactionPickerProps {
     existingReactions?: Array<{ emoji: string; userId: string; user?: { name: string } }>;
     currentUserId?: string;
     onRemoveReaction?: (emoji: string) => void;
+    isOpen?: boolean;
+    onClose?: () => void;
 }
 
 const ReactionPicker: React.FC<ReactionPickerProps> = ({
@@ -14,12 +16,28 @@ const ReactionPicker: React.FC<ReactionPickerProps> = ({
     existingReactions = [],
     currentUserId,
     onRemoveReaction,
+    isOpen = false,
+    onClose,
 }) => {
-    const [showPicker, setShowPicker] = useState(false);
+    const [showPicker, setShowPicker] = useState(isOpen);
+    
+    React.useEffect(() => {
+        setShowPicker(isOpen);
+    }, [isOpen]);
 
     const handleEmojiClick = (emojiData: EmojiClickData) => {
         onEmojiSelect(emojiData.emoji);
         setShowPicker(false);
+        if (onClose) {
+            onClose();
+        }
+    };
+    
+    const handleClose = () => {
+        setShowPicker(false);
+        if (onClose) {
+            onClose();
+        }
     };
 
     const groupedReactions = existingReactions.reduce((acc, reaction) => {
@@ -32,20 +50,13 @@ const ReactionPicker: React.FC<ReactionPickerProps> = ({
 
     return (
         <div className="relative">
-            <button
-                onClick={() => setShowPicker(!showPicker)}
-                className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-            >
-                <FaSmile className="text-lg" />
-            </button>
-
             {showPicker && (
                 <>
                     <div
                         className="fixed inset-0 z-40"
-                        onClick={() => setShowPicker(false)}
+                        onClick={handleClose}
                     />
-                    <div className="absolute bottom-full left-0 mb-2 z-50">
+                    <div className="absolute bottom-full left-0 mb-2 z-50 shadow-lg rounded-lg overflow-hidden">
                         <EmojiPicker
                             onEmojiClick={handleEmojiClick}
                             width={300}

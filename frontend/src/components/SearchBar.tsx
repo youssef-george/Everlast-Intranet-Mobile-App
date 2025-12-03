@@ -66,7 +66,7 @@ const SearchBar: React.FC = () => {
     return (
         <div ref={searchRef} className="relative w-full">
             <div className="relative">
-                <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b7280] text-sm" />
+                <FaSearch className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-[#6b7280] text-sm" />
                 <input
                     type="text"
                     value={query}
@@ -75,8 +75,8 @@ const SearchBar: React.FC = () => {
                         setShowResults(true);
                     }}
                     onFocus={() => setShowResults(true)}
-                    placeholder="Search employees, messages, groups..."
-                    className="w-full h-10 pl-11 pr-4 rounded-[20px] border border-[#e5e5e5] bg-[#f5f5f5] text-sm text-gray-900 dark:text-dark-text placeholder:text-[#6b7280] focus:outline-none focus:border-[#005d99] focus:bg-white dark:focus:bg-gray-700 transition-colors"
+                    placeholder="Search employees, message"
+                    className="w-full h-9 md:h-10 pl-10 md:pl-11 pr-3 md:pr-4 rounded-[20px] border border-[#e5e5e5] bg-[#f5f5f5] text-sm text-gray-900 dark:text-dark-text placeholder:text-[#6b7280] focus:outline-none focus:border-[#005d99] focus:bg-white dark:focus:bg-gray-700 transition-colors"
                 />
             </div>
 

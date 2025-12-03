@@ -51,7 +51,7 @@ const Chats: React.FC = () => {
     }
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-dark-bg">
+        <div className="flex flex-col h-full bg-white dark:bg-dark-bg pt-16">
             <div className="bg-primary p-4 text-white shadow-md">
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-xl font-bold">Chats</h1>
@@ -105,7 +105,7 @@ const Chats: React.FC = () => {
                                 return (
                                     <div
                                         key={otherUser.id}
-                                        onClick={() => navigate(`/chats/${otherUser.id}`)}
+                                        onClick={() => navigate(`/messages/${otherUser.id}`)}
                                         className="flex items-center p-4 hover:bg-gray-50 dark:hover:bg-dark-hover cursor-pointer transition-colors"
                                     >
                                         <div className="relative mr-4">

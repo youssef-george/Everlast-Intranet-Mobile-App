@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format, isToday, isYesterday } from 'date-fns';
-import { FaUserCircle, FaUsers, FaSearch } from 'react-icons/fa';
+import { FaUserCircle, FaUsers, FaSearch, FaPaperclip, FaMicrophone } from 'react-icons/fa';
 import api from '../services/api';
 import type { ChatPreview, Message } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -17,6 +17,11 @@ const MessagesPage: React.FC = () => {
     const queryClient = useQueryClient();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedChatId, setSelectedChatId] = useState<string | undefined>(id);
+
+    // Sync URL parameter with selected chat
+    useEffect(() => {
+        setSelectedChatId(id);
+    }, [id]);
 
     const { data: chats = [], isLoading } = useQuery({
         queryKey: ['recent-chats', currentUser?.id],
@@ -59,7 +64,11 @@ const MessagesPage: React.FC = () => {
         if (!socket || !currentUser) return;
 
         const handleNewMessage = (message: Message) => {
-            // Update the chats list when a new message arrives
+            // Invalidate and refetch recent chats to ensure we have the latest data
+            // This is especially important for new chats where we need complete user info
+            queryClient.invalidateQueries({ queryKey: ['recent-chats', currentUser.id] });
+            
+            // Also optimistically update the cache if we have the message data
             queryClient.setQueryData(['recent-chats', currentUser.id], (old: ChatPreview[] = []) => {
                 const chatId = message.groupId || (message.senderId === currentUser.id ? message.receiverId : message.senderId);
                 if (!chatId) return old;
@@ -86,16 +95,27 @@ const MessagesPage: React.FC = () => {
                             ? (existingChat.unreadCount || 0) + 1 
                             : existingChat.unreadCount || 0,
                     };
-                    return updatedChats;
+                    // Sort by last message time
+                    return updatedChats.sort((a, b) => {
+                        if (!a.lastMessage && !b.lastMessage) return 0;
+                        if (!a.lastMessage) return 1;
+                        if (!b.lastMessage) return -1;
+                        return new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime();
+                    });
                 } else {
                     // New chat - add it to the list
+                    // For individual chats, we need the receiver info if we're the sender, or sender info if we're the receiver
+                    const chatPartner = message.senderId === currentUser.id 
+                        ? message.receiver 
+                        : message.sender;
+                    
                     return [
                         {
                             id: chatId,
-                            name: message.group?.name || message.sender?.name || 'Unknown',
-                            picture: message.group?.picture || message.sender?.profilePicture,
-                            isOnline: message.sender?.isOnline || false,
-                            user: message.sender,
+                            name: message.group?.name || chatPartner?.name || 'Unknown',
+                            picture: message.group?.picture || chatPartner?.profilePicture,
+                            isOnline: chatPartner?.isOnline || false,
+                            user: chatPartner,
                             lastMessage: {
                                 id: message.id,
                                 content: message.content || '',
@@ -123,17 +143,28 @@ const MessagesPage: React.FC = () => {
             });
         };
 
+        const handleRefreshRecentChats = () => {
+            console.log('🔄 Refreshing recent chats list');
+            queryClient.invalidateQueries({ queryKey: ['recent-chats', currentUser.id] });
+        };
+
         socket.on('newMessage', handleNewMessage);
         socket.on('unreadCountUpdate', handleUnreadCountUpdate);
+        socket.on('refreshRecentChats', handleRefreshRecentChats);
 
         return () => {
             socket.off('newMessage', handleNewMessage);
             socket.off('unreadCountUpdate', handleUnreadCountUpdate);
+            socket.off('refreshRecentChats', handleRefreshRecentChats);
         };
     }, [socket, currentUser, queryClient, selectedChatId]);
 
     const handleChatSelect = (chatId: string, isGroup: boolean) => {
-        setSelectedChatId(chatId);
+        // Update URL to include chat ID
+        navigate(`/messages/${chatId}`);
+        
+        // Invalidate messages query to force refetch when selecting a chat
+        queryClient.invalidateQueries({ queryKey: ['messages', chatId, isGroup] });
         
         // Mark chat as read when selecting it
         if (socket && currentUser) {
@@ -152,12 +183,22 @@ const MessagesPage: React.FC = () => {
                 );
             });
         }
-        
-        // On mobile, navigate to full-screen chat
-        if (window.innerWidth < 768) {
-            navigate(isGroup ? `/groups/${chatId}` : `/chats/${chatId}`);
-        }
     };
+
+    // Handle ESC key to exit chat on desktop
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            // Only handle ESC on desktop (when chat is shown in right panel)
+            if (event.key === 'Escape' && window.innerWidth >= 768 && selectedChatId) {
+                navigate('/messages');
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [selectedChatId, navigate]);
 
     const formatTime = (date: Date) => {
         if (isToday(date)) {
@@ -190,9 +231,9 @@ const MessagesPage: React.FC = () => {
     }
 
     return (
-        <div className="flex h-full bg-[#f5f5f5]">
-            {/* Left Panel - Conversations List */}
-            <div className="w-full md:w-[360px] border-r border-[#e5e5e5] flex flex-col bg-white">
+        <div className="flex flex-col md:flex-row h-full bg-[#f5f5f5] overflow-hidden pt-16">
+            {/* Left Panel - Conversations List (Always Visible) */}
+            <div className={`${selectedChatId ? 'hidden md:flex' : 'flex'} md:w-[360px] border-r border-[#e5e5e5] flex-col bg-white h-full overflow-hidden`}>
                 {/* Search Header */}
                 <div className="p-4 border-b border-[#e5e5e5]">
                     <input
@@ -272,9 +313,19 @@ const MessagesPage: React.FC = () => {
                                                             ? chat.lastMessage.content.substring(0, 40) + '...'
                                                             : chat.lastMessage.content
                                                         : chat.lastMessage?.attachments?.length
-                                                        ? '📎 Attachment'
+                                                        ? (
+                                                            <span className="inline-flex items-center gap-1">
+                                                                <FaPaperclip className="text-xs" />
+                                                                Attachment
+                                                            </span>
+                                                        )
                                                         : chat.lastMessage?.voiceNote
-                                                        ? '🎙️ Voice Note'
+                                                        ? (
+                                                            <span className="inline-flex items-center gap-1">
+                                                                <FaMicrophone className="text-xs" />
+                                                                Voice Note
+                                                            </span>
+                                                        )
                                                         : 'No messages yet'}
                                                 </p>
                                                 {chat.unreadCount > 0 && (
@@ -292,16 +343,32 @@ const MessagesPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Right Panel - Chat Window (Desktop Only) */}
-            <div className="hidden md:flex flex-1 bg-[#f0f2f5]">
+            {/* Right Panel - Chat Window (Desktop Always Visible, Mobile Full Screen) */}
+            <div className={`${selectedChatId ? 'flex' : 'hidden md:flex'} flex-1 bg-[#f0f2f5] flex-col h-full overflow-hidden`}>
+                {/* Mobile: Show back button when in chat */}
+                {selectedChatId && (
+                    <div className="md:hidden p-3 border-b border-[#e5e5e5] bg-white flex items-center">
+                        <button
+                            onClick={() => setSelectedChatId(undefined)}
+                            className="flex items-center gap-2 text-[#005d99] hover:text-[#004080] transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                            <span className="font-medium">Back</span>
+                        </button>
+                    </div>
+                )}
                 {selectedChatId ? (
                     <div className="w-full h-full">
                         <ChatWindow chatId={selectedChatId} isGroup={sortedChats.find(c => c.id === selectedChatId)?.isGroup || false} />
                     </div>
                 ) : (
-                    <div className="flex items-center justify-center w-full h-full text-center p-8">
+                    <div className="hidden md:flex items-center justify-center w-full h-full text-center p-8">
                         <div>
-                            <div className="text-6xl mb-4">💭</div>
+                            <div className="text-6xl mb-4 text-[#6b7280]">
+                                <FaUserCircle className="mx-auto" />
+                            </div>
                             <h2 className="text-xl font-semibold text-[#1f2937] mb-2">
                                 Select a conversation
                             </h2>

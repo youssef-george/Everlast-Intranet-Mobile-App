@@ -24,9 +24,32 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             return;
         }
 
-        const newSocket = io('http://localhost:3001', {
+        // Use current hostname for Socket.IO to support network access
+        const getSocketURL = () => {
+            // In production (when served from backend), use relative URLs
+            if (typeof window !== 'undefined') {
+                const isProduction = import.meta.env.PROD;
+                
+                if (isProduction) {
+                    // In production, frontend is served from backend, so use relative URLs
+                    return window.location.origin;
+                }
+                
+                // Development mode - use hostname-based URL for network access
+                const hostname = window.location.hostname;
+                if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+                    return `http://${hostname}:3001`;
+                }
+            }
+            return 'http://localhost:3001';
+        };
+
+        const newSocket = io(getSocketURL(), {
             query: { userId: currentUser.id },
-            transports: ['websocket'],
+            transports: ['websocket', 'polling'], // Add polling fallback for Safari compatibility
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionAttempts: 5,
         });
 
         newSocket.on('connect', () => {

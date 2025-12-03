@@ -109,6 +109,18 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-top {
+  padding-top: max(8px, env(safe-area-inset-top));
+}
+
+.safe-area-bottom {
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
@@ -127,10 +139,286 @@ html {
     transform: translateY(0);
   }
   30% {
-    transform: translateY(-10px);
+    transform: translateY(-8px);
   }
 }
 
 .typing-dot {
   animation: typing 1.4s infinite;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  /* Message slide-in animation */
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: slideIn 0.3s ease;
+  }
+
+  /* Safe area for mobile devices */
+  .pb-safe {
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .pt-safe {
+    padding-top: max(8px, env(safe-area-inset-top));
+  }
+
+  .safe-area-top {
+    padding-top: max(env(safe-area-inset-top, 0px), 0px);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
+  }
+
+  /* Mobile header positioning - accounts for browser UI bars */
+  /* Fixed header with browser UI offset - mobile only */
+  .mobile-header-fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    padding-top: max(env(safe-area-inset-top, 0px), 44px);
+  }
+
+  @media (min-width: 768px) {
+    .mobile-header-fixed {
+      padding-top: 0;
+    }
+  }
+
+  /* Sticky header with browser UI offset - mobile only */
+  .mobile-header-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding-top: max(env(safe-area-inset-top, 0px), 44px);
+  }
+
+  @media (min-width: 768px) {
+    .mobile-header-sticky {
+      padding-top: 0;
+    }
+  }
+
+  /* Main content margin adjustment for mobile header padding */
+  .mobile-content-offset {
+    margin-top: calc(4rem + max(env(safe-area-inset-top, 0px), 0px));
+    padding-top: 0;
+  }
+
+  @media (min-width: 768px) {
+    .mobile-content-offset {
+      margin-top: 4rem;
+    }
+  }
+
+  /* Better touch targets on mobile */
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Ensure input doesn't zoom on iOS */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Improve spacing for message action buttons */
+  .message-actions {
+    gap: 8px !important;
+  }
+}
+
+/* Message Row Styles - matching HTML design */
+.message-row {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.message-row.received {
+  justify-content: flex-start;
+}
+
+.message-row.sent {
+  justify-content: flex-end;
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.message-row.received .quick-actions {
+  order: 2;
+  margin-left: 4px;
+}
+
+.message-row.sent .quick-actions {
+  order: -1;
+  margin-left: 0;
+  margin-right: 4px;
+}
+
+/* Mini buttons on mobile */
+@media (max-width: 768px) {
+  .quick-actions {
+    gap: 1px;
+  }
+
+  .quick-actions button {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+  }
+
+  .quick-actions svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .message-row.received .quick-actions {
+    margin-left: 2px;
+  }
+
+  .message-row.sent .quick-actions {
+    margin-right: 2px;
+  }
+}
+
+.message-row:hover .quick-actions {
+  opacity: 1;
+}
+
+/* Message Bubble */
+.message-bubble {
+  position: relative;
+  max-width: 480px;
+}
+
+.message-row.received .message-bubble {
+  border-bottom-left-radius: 0;
+}
+
+.message-row.sent .message-bubble {
+  border-bottom-right-radius: 0;
+}
+
+.message-text {
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.message-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.message-time {
+  white-space: nowrap;
+}
+
+.checkmarks {
+  display: inline-flex;
+  align-items: center;
+}
+
+.checkmarks svg {
+  width: 16px;
+  height: 15px;
+  color: #53bdeb;
+}
+
+/* Date Divider */
+.date-divider {
+  text-align: center;
+  margin: 30px 0 20px;
+}
+
+.date-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.85);
+  color: #667781;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 7.5px;
+  box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+}
+
+@media (max-width: 768px) {
+  /* Show quick actions on mobile - always visible */
+  .quick-actions {
+    opacity: 1 !important;
+  }
+
+  /* Better spacing for message bubbles on mobile */
+  .message-bubble-container {
+    max-width: calc(100vw - 100px) !important;
+  }
+
+  /* Ensure proper gap between elements - no overlap */
+  .message-row {
+    gap: 6px !important;
+    margin-bottom: 8px;
+  }
+
+  /* Prevent horizontal scroll on mobile */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Better input area spacing on mobile */
+  .chat-input-area {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Ensure header doesn't get cut off */
+  .mobile-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: white;
+  }
+
+  /* Adjust messages area padding when mobile header is fixed */
+  @media (max-width: 767px) {
+    .chat-messages-area {
+      padding-top: calc(60px + max(env(safe-area-inset-top, 0px), 0px) + 16px) !important;
+    }
+  }
+
+  /* Desktop: ensure chat messages area has proper spacing */
+  @media (min-width: 768px) {
+    .chat-messages-area {
+      padding-top: 16px !important;
+    }
+  }
 }

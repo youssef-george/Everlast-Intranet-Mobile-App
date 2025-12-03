@@ -8,12 +8,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['favicon.ico'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         navigateFallback: '/index.html',
         navigateFallbackAllowlist: [/^(?!\/api|\/socket\.io|\/uploads).*/],
         navigateFallbackDenylist: [/^\/api/, /^\/socket\.io/, /^\/uploads/],
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\./,
@@ -28,13 +29,14 @@ export default defineConfig({
           },
           {
             urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
-            handler: 'CacheFirst',
+            handler: 'NetworkFirst',
             options: {
               cacheName: 'image-cache',
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
-              }
+              },
+              networkTimeoutSeconds: 3
             }
           },
           {
@@ -73,12 +75,26 @@ export default defineConfig({
         orientation: 'portrait',
         start_url: '/',
         scope: '/',
+        id: '/',
+        version: '1.0.1',
         gcm_sender_id: '103953800507',
         icons: [
           {
-            src: 'vite.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
+            src: 'icon.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'icon.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
+          {
+            src: 'icon.png',
+            sizes: '180x180',
+            type: 'image/png',
             purpose: 'any'
           }
         ],
@@ -88,14 +104,14 @@ export default defineConfig({
             short_name: 'Chats',
             description: 'View your chats',
             url: '/chats',
-            icons: [{ src: 'vite.svg', sizes: 'any' }]
+            icons: [{ src: 'icon.png', sizes: '192x192' }]
           },
           {
             name: 'Groups',
             short_name: 'Groups',
             description: 'View your groups',
             url: '/groups',
-            icons: [{ src: 'vite.svg', sizes: 'any' }]
+            icons: [{ src: 'icon.png', sizes: '192x192' }]
           }
         ]
       },
@@ -107,8 +123,10 @@ export default defineConfig({
     })
   ],
   server: {
-    host: true, // Expose to network
+    host: '0.0.0.0', // Expose to network (all interfaces)
     port: 5173,
+    strictPort: false,
+    // Proxy only needed for localhost - network access uses direct API calls
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
