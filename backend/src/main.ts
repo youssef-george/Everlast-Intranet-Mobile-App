@@ -34,8 +34,25 @@ async function bootstrap() {
     });
 
     // Serve frontend static files in production
-    const publicPath = join(__dirname, '..', 'public');
-    if (existsSync(publicPath)) {
+    // Try multiple possible paths for the public directory
+    const possiblePaths = [
+        join(__dirname, '..', 'public'),           // /app/backend/dist/../public = /app/backend/public
+        join(__dirname, '..', '..', 'public'),     // /app/backend/dist/../../public = /app/public
+        join(process.cwd(), 'public'),              // /app/backend/public (if cwd is backend)
+        '/app/backend/public',                      // Absolute path in container
+    ];
+    
+    let publicPath = '';
+    for (const p of possiblePaths) {
+        console.log(`🔍 Checking public path: ${p}, exists: ${existsSync(p)}`);
+        if (existsSync(p)) {
+            publicPath = p;
+            break;
+        }
+    }
+    
+    if (publicPath) {
+        console.log(`✅ Serving static files from: ${publicPath}`);
         app.useStaticAssets(publicPath, {
             index: 'index.html',
         });
@@ -52,6 +69,9 @@ async function bootstrap() {
             // Serve index.html for all other routes (SPA routing)
             res.sendFile(join(publicPath, 'index.html'));
         });
+    } else {
+        console.warn('⚠️ No public directory found! Frontend will not be served.');
+        console.warn('Checked paths:', possiblePaths);
     }
 
     const port = process.env.PORT || 3001;
