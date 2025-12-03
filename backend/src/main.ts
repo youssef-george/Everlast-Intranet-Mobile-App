@@ -23,17 +23,21 @@ async function bootstrap() {
         exposedHeaders: ['Content-Type', 'Authorization'],
     });
 
-    // Add health check before API prefix (for Coolify/load balancers)
-    app.getHttpAdapter().get('/health', (req: Request, res: Response) => {
-        res.json({ status: 'ok', timestamp: new Date().toISOString() });
-    });
-    
-    app.getHttpAdapter().get('/', (req: Request, res: Response) => {
-        res.json({ status: 'ok', service: 'Everlast Intranet API', timestamp: new Date().toISOString() });
-    });
-
     // Set global API prefix
     app.setGlobalPrefix('api');
+
+    // Add health check routes AFTER prefix (accessible at /health and /)
+    // These bypass the API prefix for load balancer health checks
+    const httpAdapter = app.getHttpAdapter();
+    httpAdapter.get('/health', (req: Request, res: Response) => {
+        console.log('🏥 Health check endpoint hit');
+        res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+    });
+    
+    httpAdapter.get('/', (req: Request, res: Response) => {
+        console.log('🏠 Root endpoint hit');
+        res.status(200).json({ status: 'ok', service: 'Everlast Intranet API', timestamp: new Date().toISOString() });
+    });
 
     // Enable validation
     app.useGlobalPipes(
@@ -74,10 +78,12 @@ async function bootstrap() {
         
         // Handle SPA routing - serve index.html for all non-API routes
         app.use((req, res, next) => {
-            // Skip API routes, socket.io, and uploads
+            // Skip API routes, socket.io, uploads, and health check endpoints
             if (req.path.startsWith('/api') || 
                 req.path.startsWith('/socket.io') || 
-                req.path.startsWith('/uploads')) {
+                req.path.startsWith('/uploads') ||
+                req.path === '/health' ||
+                req.path === '/') {
                 return next();
             }
             
