@@ -484,8 +484,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
                 <div className={`flex items-center gap-[3px] mt-1 message-footer ${isMe ? 'justify-end' : 'justify-start'}`}>
                     {/* Forwarded indicator icon */}
+                    {/* Forwarded message indicator */}
                     {message.forwardedFromMessage && (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#17a74a] w-3.5 h-3.5 mr-0.5 flex-shrink-0" title="Forwarded message">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#17a74a] w-3.5 h-3.5 mr-0.5 flex-shrink-0" aria-label="Forwarded message">
                             <polyline points="13 17 18 12 13 7"/>
                             <polyline points="6 17 11 12 6 7"/>
                         </svg>

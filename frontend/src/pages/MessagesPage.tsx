@@ -87,9 +87,13 @@ const MessagesPage: React.FC = () => {
                             id: message.id,
                             content: message.content || '',
                             createdAt: message.createdAt,
+                            updatedAt: message.updatedAt || message.createdAt,
                             sender: message.sender,
+                            senderId: message.senderId,
                             attachments: message.attachments,
                             voiceNote: message.voiceNote,
+                            isPinned: message.isPinned || false,
+                            isDeleted: message.isDeleted || false,
                         },
                         unreadCount: shouldIncrementUnread 
                             ? (existingChat.unreadCount || 0) + 1 
@@ -112,17 +116,21 @@ const MessagesPage: React.FC = () => {
                     return [
                         {
                             id: chatId,
-                            name: message.group?.name || chatPartner?.name || 'Unknown',
-                            picture: message.group?.picture || chatPartner?.profilePicture,
+                            name: chatPartner?.name || 'Unknown',
+                            picture: chatPartner?.profilePicture,
                             isOnline: chatPartner?.isOnline || false,
                             user: chatPartner,
                             lastMessage: {
                                 id: message.id,
                                 content: message.content || '',
                                 createdAt: message.createdAt,
+                                updatedAt: message.updatedAt || message.createdAt,
                                 sender: message.sender,
+                                senderId: message.senderId,
                                 attachments: message.attachments,
                                 voiceNote: message.voiceNote,
+                                isPinned: message.isPinned || false,
+                                isDeleted: message.isDeleted || false,
                             },
                             unreadCount: shouldIncrementUnread ? 1 : 0,
                             isGroup: !!message.groupId,
@@ -278,9 +286,9 @@ const MessagesPage: React.FC = () => {
                                     >
                                         {/* Avatar */}
                                         <div className="relative flex-shrink-0">
-                                            {chatPartner.picture || chatPartner.profilePicture ? (
+                                            {(chatPartner as { picture?: string; profilePicture?: string }).picture || (chatPartner as { profilePicture?: string }).profilePicture ? (
                                                 <img
-                                                    src={chatPartner.picture || chatPartner.profilePicture}
+                                                    src={(chatPartner as { picture?: string; profilePicture?: string }).picture || (chatPartner as { profilePicture?: string }).profilePicture}
                                                     alt={chatPartner.name}
                                                     className="w-12 h-12 rounded-full object-cover"
                                                 />

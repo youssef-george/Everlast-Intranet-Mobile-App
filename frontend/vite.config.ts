@@ -76,7 +76,6 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         id: '/',
-        gcm_sender_id: '103953800507',
         icons: [
           {
             src: 'icon.png',

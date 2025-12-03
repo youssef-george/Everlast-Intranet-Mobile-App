@@ -18,8 +18,8 @@ const PWAInstallPrompt: React.FC = () => {
             return;
         }
 
-        // Check if running as PWA
-        if (window.navigator.standalone === true) {
+        // Check if running as PWA (iOS Safari)
+        if ((window.navigator as Navigator & { standalone?: boolean }).standalone === true) {
             setIsInstalled(true);
             return;
         }
