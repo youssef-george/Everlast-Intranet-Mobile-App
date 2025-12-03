@@ -22,6 +22,15 @@ async function bootstrap() {
         exposedHeaders: ['Content-Type', 'Authorization'],
     });
 
+    // Add health check before API prefix (for Coolify/load balancers)
+    app.getHttpAdapter().get('/health', (req, res) => {
+        res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    });
+    
+    app.getHttpAdapter().get('/', (req, res) => {
+        res.json({ status: 'ok', service: 'Everlast Intranet API', timestamp: new Date().toISOString() });
+    });
+
     // Set global API prefix
     app.setGlobalPrefix('api');
 
