@@ -13,14 +13,15 @@ cmds = [
 [phases.build]
 cmds = [
   "cd frontend && npm run build",
-  "cd backend && npm run build",
+  "cd backend && npm run build && echo '✅ Backend build complete' && ls -la dist/ || (echo '❌ Backend build failed' && exit 1)",
   "mkdir -p backend/public",
   "cp -r frontend/dist/* backend/public/",
-  "mkdir -p backend/uploads"
+  "mkdir -p backend/uploads",
+  "echo '📦 Verifying build output:' && cd backend && ls -la && ls -la dist/ || echo '⚠️ dist directory not found'"
 ]
 
 [start]
-cmd = "cd backend && (npx prisma db push --skip-generate --accept-data-loss || echo 'Database sync warning') && node dist/main.js"
+cmd = "cd /app/backend 2>/dev/null || cd backend && pwd && echo '📦 Listing files:' && ls -la && echo '📁 Checking dist:' && (ls -la dist/ 2>/dev/null || echo '❌ dist not found') && echo '🔍 Searching for main.js:' && find /app -name 'main.js' -type f 2>/dev/null | head -5 || find . -name 'main.js' -type f 2>/dev/null | head -5 && echo '🔄 Database sync...' && (npx prisma db push --skip-generate --accept-data-loss 2>&1 || true) && echo '🚀 Starting app...' && if [ -f dist/main.js ]; then node dist/main.js; elif [ -f /app/backend/dist/main.js ]; then cd /app/backend && node dist/main.js; else echo '❌ Cannot find main.js!' && exit 1; fi"
 
 [variables]
 NODE_ENV = "production"
