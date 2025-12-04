@@ -23,17 +23,20 @@ async function bootstrap() {
         exposedHeaders: ['Content-Type', 'Authorization'],
     });
 
-    // Add health check routes BEFORE global prefix (accessible at /health and /)
-    // These bypass the API prefix for load balancer health checks
-    const expressApp = app.getHttpAdapter().getInstance();
-    expressApp.get('/health', (req: Request, res: Response) => {
-        console.log('🏥 Health check endpoint hit');
-        res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+    // Add request logging middleware FIRST
+    app.use((req: Request, res: Response, next) => {
+        console.log(`📥 Request: ${req.method} ${req.path} from ${req.ip || req.socket.remoteAddress || 'unknown'}`);
+        next();
     });
-    
-    expressApp.get('/', (req: Request, res: Response) => {
-        console.log('🏠 Root endpoint hit');
-        res.status(200).json({ status: 'ok', service: 'Everlast Intranet API', timestamp: new Date().toISOString() });
+
+    // Add health check endpoint - ONLY /health, not root
+    // This bypasses the API prefix for load balancer health checks
+    app.use((req: Request, res: Response, next) => {
+        if (req.path === '/health' && req.method === 'GET') {
+            console.log('🏥 Health check endpoint hit');
+            return res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+        }
+        next();
     });
 
     // Set global API prefix
@@ -77,18 +80,25 @@ async function bootstrap() {
         });
         
         // Handle SPA routing - serve index.html for all non-API routes
+        // Root path (/) is handled by static assets above, so we skip it here
         app.use((req, res, next) => {
             // Skip API routes, socket.io, uploads, and health check endpoints
             if (req.path.startsWith('/api') || 
                 req.path.startsWith('/socket.io') || 
                 req.path.startsWith('/uploads') ||
-                req.path === '/health' ||
-                req.path === '/') {
+                req.path === '/health') {
                 return next();
             }
             
             // Serve index.html for all other routes (SPA routing)
-            res.sendFile(join(publicPath, 'index.html'));
+            // This includes root path if static assets didn't handle it
+            console.log(`📄 Serving index.html for SPA route: ${req.path}`);
+            res.sendFile(join(publicPath, 'index.html'), (err) => {
+                if (err) {
+                    console.error(`❌ Error serving index.html for ${req.path}:`, err.message);
+                    res.status(404).send('Not found');
+                }
+            });
         });
     } else {
         console.warn('⚠️ No public directory found! Frontend will not be served.');
@@ -124,6 +134,7 @@ async function bootstrap() {
     console.log(`🚀 Server running on http://localhost:${port}`);
     console.log(`🌐 Network access: http://${localIP}:${port}`);
     console.log(`✅ Application is ready to accept connections`);
+    console.log(`🏥 Health check available at: http://localhost:${port}/health`);
 }
 
 console.log('📝 Starting bootstrap process...');
