@@ -4,11 +4,11 @@ import { FaUsers, FaComment, FaBell, FaBuilding } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { useNotifications } from '../context/NotificationsContext';
+import { useNotificationsSafe } from '../context/NotificationsContext';
 
 const Sidebar: React.FC = () => {
     const { currentUser } = useAuth();
-    const { unreadCount: unreadNotificationsCount } = useNotifications();
+    const { unreadCount: unreadNotificationsCount } = useNotificationsSafe();
     const location = useLocation();
 
     // Get unread message count

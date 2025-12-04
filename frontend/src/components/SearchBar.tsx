@@ -4,6 +4,7 @@ import { FaSearch, FaUser, FaUsers } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import type { User } from '../types';
+import { getImageUrl } from '../utils/imageUtils';
 
 interface SearchResults {
     users: User[];
@@ -18,8 +19,20 @@ const SearchBar: React.FC = () => {
     const [query, setQuery] = useState('');
     const [showResults, setShowResults] = useState(false);
     const [debouncedQuery, setDebouncedQuery] = useState('');
+    const [isMobile, setIsMobile] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
     const navigate = useNavigate();
+
+    // Check if mobile on mount and resize
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Debounce search query
     useEffect(() => {
@@ -66,17 +79,31 @@ const SearchBar: React.FC = () => {
     return (
         <div ref={searchRef} className="relative w-full">
             <div className="relative">
-                <FaSearch className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-[#6b7280] text-sm" />
+                <FaSearch className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-[#6b7280] text-sm hidden md:block" />
                 <input
+                    ref={inputRef}
                     type="text"
                     value={query}
                     onChange={(e) => {
                         setQuery(e.target.value);
                         setShowResults(true);
+                        // Ensure text stays centered on mobile
+                        if (isMobile && inputRef.current) {
+                            inputRef.current.style.textAlign = 'center';
+                        }
                     }}
-                    onFocus={() => setShowResults(true)}
+                    onFocus={() => {
+                        setShowResults(true);
+                        // Ensure text stays centered on mobile when focused
+                        if (isMobile && inputRef.current) {
+                            inputRef.current.style.textAlign = 'center';
+                        }
+                    }}
                     placeholder="Search employees, message"
-                    className="w-full h-9 md:h-10 pl-10 md:pl-11 pr-3 md:pr-4 rounded-[20px] border border-[#e5e5e5] bg-[#f5f5f5] text-sm text-gray-900 dark:text-dark-text placeholder:text-[#6b7280] focus:outline-none focus:border-[#005d99] focus:bg-white dark:focus:bg-gray-700 transition-colors"
+                    style={{
+                        textAlign: isMobile ? 'center' : 'left'
+                    }}
+                    className="w-full h-9 md:h-10 pl-3 md:pl-11 pr-3 md:pr-4 rounded-[20px] border border-[#e5e5e5] bg-[#f5f5f5] text-sm text-gray-900 dark:text-dark-text placeholder:text-[#6b7280] focus:outline-none focus:border-[#005d99] focus:bg-white dark:focus:bg-gray-700 transition-colors mobile-centered"
                 />
             </div>
 
@@ -102,17 +129,26 @@ const SearchBar: React.FC = () => {
                                             className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
                                         >
                                             <FaUser className="text-primary text-sm" />
-                                            {user.profilePicture ? (
-                                                <img
-                                                    src={user.profilePicture}
-                                                    alt={user.name}
-                                                    className="w-8 h-8 rounded-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-xs font-semibold text-gray-600 dark:text-gray-300">
-                                                    {user.name.substring(0, 2).toUpperCase()}
-                                                </div>
-                                            )}
+                                            {(() => {
+                                                const profilePictureUrl = getImageUrl(user.profilePicture);
+                                                return profilePictureUrl ? (
+                                                    <img
+                                                        src={profilePictureUrl}
+                                                        alt={user.name}
+                                                        className="w-8 h-8 rounded-full object-cover"
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                            const fallback = e.currentTarget.nextElementSibling;
+                                                            if (fallback) {
+                                                                (fallback as HTMLElement).style.display = 'flex';
+                                                            }
+                                                        }}
+                                                    />
+                                                ) : null;
+                                            })()}
+                                            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-xs font-semibold text-gray-600 dark:text-gray-300" style={{ display: user.profilePicture ? 'none' : 'flex' }}>
+                                                {user.name.substring(0, 2).toUpperCase()}
+                                            </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium text-gray-900 dark:text-dark-text truncate">
                                                     {user.name}

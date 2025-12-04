@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FaUserCircle, FaCheck, FaSearch } from 'react-icons/fa';
 import api from '../services/api';
 import type { User } from '../types';
+import { getImageUrl } from '../utils/imageUtils';
 
 interface UserSelectorProps {
     onSelect: (userId: string) => void;
@@ -133,15 +134,24 @@ const UserSelector: React.FC<UserSelectorProps> = ({ onSelect, currentUserId }) 
                                             : ''
                                     }`}
                                 >
-                                    {user.profilePicture ? (
-                                        <img
-                                            src={user.profilePicture}
-                                            alt={user.name}
-                                            className="w-12 h-12 rounded-full object-cover"
-                                        />
-                                    ) : (
-                                        <FaUserCircle className="w-12 h-12 text-gray-400" />
-                                    )}
+                                    {(() => {
+                                        const profilePictureUrl = getImageUrl(user.profilePicture);
+                                        return profilePictureUrl ? (
+                                            <img
+                                                src={profilePictureUrl}
+                                                alt={user.name}
+                                                className="w-12 h-12 rounded-full object-cover"
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = 'none';
+                                                    const fallback = e.currentTarget.nextElementSibling;
+                                                    if (fallback) {
+                                                        (fallback as HTMLElement).style.display = 'block';
+                                                    }
+                                                }}
+                                            />
+                                        ) : null;
+                                    })()}
+                                    <FaUserCircle className="w-12 h-12 text-gray-400" style={{ display: user.profilePicture ? 'none' : 'block' }} />
                                     <div className="flex-1 text-left min-w-0">
                                         <div className="flex items-center space-x-2">
                                             <h3 className="font-semibold text-gray-900 dark:text-dark-text truncate">

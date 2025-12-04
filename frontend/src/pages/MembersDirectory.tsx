@@ -7,6 +7,7 @@ import type { User } from '../types';
 import { useAuth } from '../context/AuthContext';
 import AddEmployeeModal from '../components/AddEmployeeModal';
 import EditEmployeeModal from '../components/EditEmployeeModal';
+import { getImageUrl } from '../utils/imageUtils';
 
 const MembersDirectory: React.FC = () => {
     const navigate = useNavigate();
@@ -14,7 +15,7 @@ const MembersDirectory: React.FC = () => {
     const queryClient = useQueryClient();
     const [searchQuery, setSearchQuery] = useState('');
     const [filter, setFilter] = useState<string>('all');
-    const [viewMode, setViewMode] = useState<'departments' | 'members'>('departments');
+    const [viewMode, setViewMode] = useState<'departments' | 'members'>('members');
     const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -134,7 +135,7 @@ const MembersDirectory: React.FC = () => {
     }
 
     return (
-        <div className="flex flex-col h-full bg-gray-50 dark:bg-dark-bg overflow-y-auto pb-20 md:pb-0 pt-16">
+        <div className="flex flex-col h-full bg-gray-50 dark:bg-dark-bg overflow-y-auto pb-20 md:pb-0 pt-0 md:pt-16">
             {/* Page Header */}
             <header className="p-4 md:p-8 bg-white dark:bg-dark-paper border-b border-gray-200 dark:border-gray-700">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -167,22 +168,6 @@ const MembersDirectory: React.FC = () => {
                     <nav className="flex flex-row items-center gap-2 flex-shrink-0 w-full md:w-auto" aria-label="View mode toggle">
                         <button
                             onClick={() => {
-                                setViewMode('departments');
-                                setSelectedDepartment(null);
-                                setFilter('all');
-                            }}
-                            className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all flex items-center justify-center gap-1 md:gap-2 whitespace-nowrap flex-shrink-0 ${
-                                viewMode === 'departments'
-                                    ? 'bg-primary text-white'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                            }`}
-                            aria-pressed={viewMode === 'departments'}
-                        >
-                            <FaTh className="text-xs md:text-sm flex-shrink-0" aria-hidden="true" />
-                            <span>Departments</span>
-                        </button>
-                        <button
-                            onClick={() => {
                                 setViewMode('members');
                                 setFilter('all');
                                 setSelectedDepartment(null);
@@ -197,6 +182,22 @@ const MembersDirectory: React.FC = () => {
                             <FaList className="text-xs md:text-sm flex-shrink-0" aria-hidden="true" />
                             <span className="hidden sm:inline">All Members</span>
                             <span className="sm:hidden">Members</span>
+                        </button>
+                        <button
+                            onClick={() => {
+                                setViewMode('departments');
+                                setSelectedDepartment(null);
+                                setFilter('all');
+                            }}
+                            className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-medium transition-all flex items-center justify-center gap-1 md:gap-2 whitespace-nowrap flex-shrink-0 ${
+                                viewMode === 'departments'
+                                    ? 'bg-primary text-white'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            }`}
+                            aria-pressed={viewMode === 'departments'}
+                        >
+                            <FaTh className="text-xs md:text-sm flex-shrink-0" aria-hidden="true" />
+                            <span>Departments</span>
                         </button>
                     </nav>
                 </div>
@@ -265,11 +266,11 @@ const MembersDirectory: React.FC = () => {
                 <div className="p-8">
                     {/* Quick Filters (when viewing members) */}
                     {!selectedDepartment && (
-                        <div className="mb-6">
-                            <div className="flex gap-3 flex-wrap">
+                        <div className="mb-3 md:mb-6">
+                            <div className="flex gap-1.5 md:gap-3 flex-wrap">
                                 <button
                                     onClick={() => setFilter('all')}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                    className={`px-1.5 py-1 md:px-4 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-sm font-medium transition-all ${
                                         filter === 'all'
                                             ? 'bg-primary text-white'
                                             : 'bg-white dark:bg-dark-paper border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary'
@@ -281,7 +282,7 @@ const MembersDirectory: React.FC = () => {
                                     <button
                                         key={dept.name}
                                         onClick={() => setFilter(dept.name)}
-                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                        className={`px-1.5 py-1 md:px-4 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-sm font-medium transition-all ${
                                             filter === dept.name
                                                 ? 'bg-primary text-white'
                                                 : 'bg-white dark:bg-dark-paper border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary'
@@ -292,7 +293,7 @@ const MembersDirectory: React.FC = () => {
                                 ))}
                                 <button
                                     onClick={() => setFilter('online')}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                    className={`px-1.5 py-1 md:px-4 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-sm font-medium transition-all ${
                                         filter === 'online'
                                             ? 'bg-primary text-white'
                                             : 'bg-white dark:bg-dark-paper border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary'
@@ -304,46 +305,55 @@ const MembersDirectory: React.FC = () => {
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
                         {filteredUsers?.map((user) => (
                         <div
                             key={user.id}
                             onClick={() => navigate(`/members/${user.id}`)}
-                            className="bg-white dark:bg-dark-paper rounded-xl p-5 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                            className="bg-white dark:bg-dark-paper rounded-xl p-3 md:p-5 border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                         >
                             {/* Card Header */}
-                            <div className="flex items-start gap-4 mb-4">
+                            <div className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-4 mb-3 md:mb-4">
                                 {/* Avatar */}
                                 <div className="relative flex-shrink-0">
-                                    {user.profilePicture ? (
-                                        <img
-                                            src={user.profilePicture}
-                                            alt={user.name}
-                                            className="w-14 h-14 rounded-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="w-14 h-14 rounded-full gradient-primary flex items-center justify-center text-white font-semibold text-lg">
-                                            {user.name.substring(0, 2).toUpperCase()}
-                                        </div>
-                                    )}
+                                    {(() => {
+                                        const profilePictureUrl = getImageUrl(user.profilePicture);
+                                        return profilePictureUrl ? (
+                                            <img
+                                                src={profilePictureUrl}
+                                                alt={user.name}
+                                                className="w-12 h-12 md:w-14 md:h-14 rounded-full object-cover"
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = 'none';
+                                                    const fallback = e.currentTarget.nextElementSibling;
+                                                    if (fallback) {
+                                                        (fallback as HTMLElement).style.display = 'flex';
+                                                    }
+                                                }}
+                                            />
+                                        ) : null;
+                                    })()}
+                                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-full gradient-primary flex items-center justify-center text-white font-semibold text-base md:text-lg" style={{ display: user.profilePicture ? 'none' : 'flex' }}>
+                                        {user.name.substring(0, 2).toUpperCase()}
+                                    </div>
                                     {user.isOnline && (
-                                        <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-3 border-white dark:border-dark-paper"></div>
+                                        <div className="absolute bottom-0 right-0 w-3 h-3 md:w-4 md:h-4 bg-green-500 rounded-full border-2 md:border-3 border-white dark:border-dark-paper"></div>
                                     )}
                                 </div>
 
                                 {/* Info */}
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="text-base font-semibold text-gray-900 dark:text-dark-text truncate mb-1">
+                                <div className="flex-1 min-w-0 text-center md:text-left w-full">
+                                    <h3 className="text-sm md:text-base font-semibold text-gray-900 dark:text-dark-text truncate mb-0.5 md:mb-1">
                                         {user.name}
                                     </h3>
-                                    <p className="text-sm text-gray-600 dark:text-dark-muted truncate mb-0.5">
+                                    <p className="text-xs md:text-sm text-gray-600 dark:text-dark-muted truncate mb-0.5">
                                         {user.jobTitle}
                                     </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mb-1 md:mb-0">
                                         {user.department}
                                     </p>
                                     <span
-                                        className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold ${
+                                        className={`inline-block mt-1 md:mt-2 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs font-semibold ${
                                             user.accountState === 'ACTIVE'
                                                 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                                                 : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
@@ -355,40 +365,40 @@ const MembersDirectory: React.FC = () => {
                             </div>
 
                             {/* Actions */}
-                            <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
+                            <div className="flex gap-1.5 md:gap-2 pt-2 md:pt-3 border-t border-gray-100 dark:border-gray-700">
                                 <button
                                     onClick={(e) => handleMessage(e, user.id)}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white text-sm font-medium rounded-lg transition-colors"
+                                    className="flex-1 flex items-center justify-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-primary hover:bg-primary-dark text-white text-xs md:text-sm font-medium rounded-lg transition-colors"
                                 >
                                     <FaComment className="text-xs" />
-                                    Message
+                                    <span className="hidden sm:inline">Message</span>
                                 </button>
                                 <button
                                     onClick={(e) => handleView(e, user.id)}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors"
+                                    className="flex-1 flex items-center justify-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs md:text-sm font-medium rounded-lg transition-colors"
                                 >
                                     <FaEye className="text-xs" />
-                                    View
+                                    <span className="hidden sm:inline">View</span>
                                 </button>
                                 {currentUser?.role === 'SUPER_ADMIN' && (
                                     <>
                                         <button
                                             onClick={(e) => handleEdit(e, user)}
-                                            className="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-primary rounded-lg transition-colors"
+                                            className="px-2 md:px-3 py-1.5 md:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-primary rounded-lg transition-colors"
                                             title="Edit"
                                         >
-                                            <FaEdit />
+                                            <FaEdit className="text-xs md:text-sm" />
                                         </button>
                                         <button
                                             onClick={(e) => handleDeactivate(e, user)}
-                                            className={`px-3 py-2 rounded-lg transition-colors ${
+                                            className={`px-2 md:px-3 py-1.5 md:py-2 rounded-lg transition-colors ${
                                                 user.accountState === 'ACTIVE'
                                                     ? 'bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 text-red-500'
                                                     : 'bg-green-50 dark:bg-green-900/10 hover:bg-green-100 dark:hover:bg-green-900/20 text-green-500'
                                             }`}
                                             title={user.accountState === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                                         >
-                                            {user.accountState === 'ACTIVE' ? <FaBan /> : <FaCheck />}
+                                            {user.accountState === 'ACTIVE' ? <FaBan className="text-xs md:text-sm" /> : <FaCheck className="text-xs md:text-sm" />}
                                         </button>
                                     </>
                                 )}

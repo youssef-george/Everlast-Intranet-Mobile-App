@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FaTimes, FaUpload, FaCheck } from 'react-icons/fa';
 import api from '../services/api';
 import type { User } from '../types';
+import { getImageUrl } from '../utils/imageUtils';
 
 interface CreateGroupModalProps {
     isOpen: boolean;
@@ -158,17 +159,26 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onClose, cu
                                             : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                                     }`}
                                 >
-                                    {user.profilePicture ? (
-                                        <img
-                                            src={user.profilePicture}
-                                            alt={user.name}
-                                            className="w-10 h-10 rounded-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                            {user.name.charAt(0)}
-                                        </div>
-                                    )}
+                                    {(() => {
+                                        const profilePictureUrl = getImageUrl(user.profilePicture);
+                                        return profilePictureUrl ? (
+                                            <img
+                                                src={profilePictureUrl}
+                                                alt={user.name}
+                                                className="w-10 h-10 rounded-full object-cover"
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = 'none';
+                                                    const fallback = e.currentTarget.nextElementSibling;
+                                                    if (fallback) {
+                                                        (fallback as HTMLElement).style.display = 'flex';
+                                                    }
+                                                }}
+                                            />
+                                        ) : null;
+                                    })()}
+                                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center" style={{ display: user.profilePicture ? 'none' : 'flex' }}>
+                                        {user.name.charAt(0)}
+                                    </div>
                                     <div className="flex-1 text-left">
                                         <p className="font-medium text-gray-900 dark:text-dark-text">
                                             {user.name}

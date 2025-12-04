@@ -6,6 +6,7 @@ import api from '../services/api';
 import type { User } from '../types';
 import { useAuth } from '../context/AuthContext';
 import EditEmployeeModal from '../components/EditEmployeeModal';
+import { getImageUrl } from '../utils/imageUtils';
 
 const EmployeeProfile: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -53,22 +54,31 @@ const EmployeeProfile: React.FC = () => {
     const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
 
     return (
-        <div className="flex flex-col h-full bg-gray-50 dark:bg-dark-bg overflow-y-auto pb-20 md:pb-0 pt-16">
+        <div className="flex flex-col h-full bg-gray-50 dark:bg-dark-bg overflow-y-auto pb-20 md:pb-0 pt-0 md:pt-16">
             {/* Header Image */}
             <div className="h-32 gradient-primary"></div>
 
             {/* Profile Info */}
             <div className="px-4 md:px-8 -mt-16 pb-4">
                 <div className="relative inline-block">
-                    {user.profilePicture ? (
-                        <img
-                            src={user.profilePicture}
-                            alt={user.name}
-                            className="w-32 h-32 rounded-full border-4 border-white dark:border-dark-bg object-cover"
-                        />
-                    ) : (
-                        <FaUserCircle className="w-32 h-32 text-gray-400 bg-white rounded-full border-4 border-white dark:border-dark-bg" />
-                    )}
+                    {(() => {
+                        const profilePictureUrl = getImageUrl(user.profilePicture);
+                        return profilePictureUrl ? (
+                            <img
+                                src={profilePictureUrl}
+                                alt={user.name}
+                                className="w-32 h-32 rounded-full border-4 border-white dark:border-dark-bg object-cover"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const fallback = e.currentTarget.nextElementSibling;
+                                    if (fallback) {
+                                        (fallback as HTMLElement).style.display = 'block';
+                                    }
+                                }}
+                            />
+                        ) : null;
+                    })()}
+                    <FaUserCircle className="w-32 h-32 text-gray-400 bg-white rounded-full border-4 border-white dark:border-dark-bg" style={{ display: user.profilePicture ? 'none' : 'block' }} />
                     {user.isOnline && (
                         <div className="absolute bottom-2 right-2 w-5 h-5 bg-green-500 rounded-full border-2 border-white dark:border-dark-bg"></div>
                     )}

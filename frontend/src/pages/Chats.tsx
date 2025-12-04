@@ -6,6 +6,7 @@ import { FaUserCircle, FaUsers, FaSearch, FaPlus } from 'react-icons/fa';
 import api from '../services/api';
 import type { ChatPreview, User } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { getImageUrl } from '../utils/imageUtils';
 
 const Chats: React.FC = () => {
     const navigate = useNavigate();
@@ -51,7 +52,7 @@ const Chats: React.FC = () => {
     }
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-dark-bg pt-16">
+        <div className="flex flex-col h-full bg-white dark:bg-dark-bg pt-0 md:pt-16">
             <div className="bg-primary p-4 text-white shadow-md">
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-xl font-bold">Chats</h1>
@@ -109,15 +110,24 @@ const Chats: React.FC = () => {
                                         className="flex items-center p-4 hover:bg-gray-50 dark:hover:bg-dark-hover cursor-pointer transition-colors"
                                     >
                                         <div className="relative mr-4">
-                                            {otherUser.profilePicture ? (
-                                                <img
-                                                    src={otherUser.profilePicture}
-                                                    alt={otherUser.name}
-                                                    className="w-12 h-12 rounded-full object-cover"
-                                                />
-                                            ) : (
-                                                <FaUserCircle className="w-12 h-12 text-gray-400" />
-                                            )}
+                                            {(() => {
+                                                const profilePictureUrl = getImageUrl(otherUser.profilePicture);
+                                                return profilePictureUrl ? (
+                                                    <img
+                                                        src={profilePictureUrl}
+                                                        alt={otherUser.name}
+                                                        className="w-12 h-12 rounded-full object-cover"
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                            const fallback = e.currentTarget.nextElementSibling;
+                                                            if (fallback) {
+                                                                (fallback as HTMLElement).style.display = 'block';
+                                                            }
+                                                        }}
+                                                    />
+                                                ) : null;
+                                            })()}
+                                            <FaUserCircle className="w-12 h-12 text-gray-400" style={{ display: otherUser.profilePicture ? 'none' : 'block' }} />
                                             {otherUser.isOnline && (
                                                 <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-dark-bg"></div>
                                             )}

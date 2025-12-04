@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import MessageBubble from '../components/MessageBubble';
 import VoiceRecorder from '../components/VoiceRecorder';
+import { getImageUrl } from '../utils/imageUtils';
 
 interface ChatWindowProps {
     isGroup?: boolean;
@@ -92,13 +93,22 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ isGroup = false, chatId: propCh
     useEffect(() => {
         if (!socket || !currentUser || !id) return;
 
+        // Immediately clear unread count in recent chats list
+        queryClient.setQueryData(['recent-chats', currentUser.id], (old: any[] = []) => {
+            return old.map((chat) => 
+                chat.id === id 
+                    ? { ...chat, unreadCount: 0 }
+                    : chat
+            );
+        });
+
         // Mark all messages in this chat as read
         socket.emit('markChatAsRead', {
             chatId: id,
             userId: currentUser.id,
             isGroup,
         });
-    }, [socket, currentUser, id, isGroup]);
+    }, [socket, currentUser, id, isGroup, queryClient]);
 
     // Handle ESC key to exit chat
     useEffect(() => {
@@ -175,6 +185,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ isGroup = false, chatId: propCh
 
         // Handler for new messages from other users (receiver only)
         const handleNewMessage = (message: Message) => {
+            // Skip messages sent by current user in individual chats (not self-chat)
+            // These are already handled by messageSaved event
+            if (!isGroup && message.senderId === currentUser?.id && message.receiverId !== currentUser?.id) {
+                console.log('⏭️ Skipping own message in individual chat, already handled by messageSaved.');
+                return;
+            }
+            
             // For individual chats: message belongs to this chat if:
             // - sender is chat partner (id) AND receiver is current user, OR
             // - sender is current user AND receiver is current user (self-chat)
@@ -236,6 +253,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ isGroup = false, chatId: propCh
                     return [...old, message];
                 });
             }
+        };
+
+        const handleMessageUpdated = (message: Message) => {
+            // Update message with full data (relations, etc.)
+            console.log('🔄 Received messageUpdated event:', message.id);
+            queryClient.setQueryData(['messages', id, isGroup], (old: Message[] = []) =>
+                old.map(m => m.id === message.id ? message : m)
+            );
         };
 
         const handleTyping = (data: { userId: string; chatId: string; isGroup: boolean }) => {
@@ -358,6 +383,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ isGroup = false, chatId: propCh
         // Register socket event listeners
         socket.on('messageSaved', handleMessageSaved);  // Sender confirmation
         socket.on('newMessage', handleNewMessage);      // Receiver notification
+        socket.on('messageUpdated', handleMessageUpdated); // Message update with full data
         socket.on('messageError', handleMessageError);  // Error handling
         socket.on('messageSent', handleMessageSent);    // Legacy support
         socket.on('userTyping', handleTyping);
@@ -851,21 +877,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ isGroup = false, chatId: propCh
     const rawPicture = chatInfo ? (isGroup ? (chatInfo as Group).picture : (chatInfo as User).profilePicture) : null;
     const isOnline = !isGroup && chatInfo ? (chatInfo as User).isOnline : false;
     
-    // Convert relative picture URLs to full URLs
-    const getPictureUrl = (pic?: string | null): string | null => {
-        if (!pic) return null;
-        if (pic.startsWith('http://') || pic.startsWith('https://')) return pic;
-        // If it's a relative path, construct full URL
-        if (pic.startsWith('/')) {
-            const apiBaseURL = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
-                ? `http://${window.location.hostname}:3001`
-                : 'http://localhost:3001';
-            return `${apiBaseURL}${pic}`;
-        }
-        return pic;
-    };
-    
-    const picture = getPictureUrl(rawPicture);
+    // Convert relative picture URLs to full URLs using utility function
+    const picture = getImageUrl(rawPicture);
 
     const groupedMessages = groupMessagesByDate(messages);
 
@@ -961,17 +974,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ isGroup = false, chatId: propCh
                                             </button>
                                         </div>
                                         <div className="flex items-center space-x-3">
-                                            {(chatInfo as User).profilePicture ? (
-                                                <img 
-                                                    src={(chatInfo as User).profilePicture} 
-                                                    alt={(chatInfo as User).name}
-                                                    className="w-12 h-12 rounded-full border-2 border-white"
-                                                />
-                                            ) : (
-                                                <div className="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white font-semibold border-2 border-white">
-                                                    {(chatInfo as User).name.substring(0, 2).toUpperCase()}
-                                                </div>
-                                            )}
+                                            {(() => {
+                                                const profilePictureUrl = getImageUrl((chatInfo as User).profilePicture);
+                                                return profilePictureUrl ? (
+                                                    <img 
+                                                        src={profilePictureUrl} 
+                                                        alt={(chatInfo as User).name}
+                                                        className="w-12 h-12 rounded-full border-2 border-white"
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                            const fallback = e.currentTarget.nextElementSibling;
+                                                            if (fallback) {
+                                                                (fallback as HTMLElement).style.display = 'flex';
+                                                            }
+                                                        }}
+                                                    />
+                                                ) : null;
+                                            })()}
+                                            <div className="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white font-semibold border-2 border-white" style={{ display: (chatInfo as User).profilePicture ? 'none' : 'flex' }}>
+                                                {(chatInfo as User).name.substring(0, 2).toUpperCase()}
+                                            </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-semibold text-white truncate">{(chatInfo as User).name}</p>
                                                 <p className="text-xs text-white text-opacity-90 truncate">{(chatInfo as User).jobTitle}</p>
@@ -1214,17 +1236,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ isGroup = false, chatId: propCh
                                             </button>
                                         </div>
                                         <div className="flex items-center space-x-3">
-                                            {(chatInfo as User).profilePicture ? (
-                                                <img 
-                                                    src={(chatInfo as User).profilePicture} 
-                                                    alt={(chatInfo as User).name}
-                                                    className="w-12 h-12 rounded-full border-2 border-white"
-                                                />
-                                            ) : (
-                                                <div className="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white font-semibold border-2 border-white">
-                                                    {(chatInfo as User).name.substring(0, 2).toUpperCase()}
-                                                </div>
-                                            )}
+                                            {(() => {
+                                                const profilePictureUrl = getImageUrl((chatInfo as User).profilePicture);
+                                                return profilePictureUrl ? (
+                                                    <img 
+                                                        src={profilePictureUrl} 
+                                                        alt={(chatInfo as User).name}
+                                                        className="w-12 h-12 rounded-full border-2 border-white"
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                            const fallback = e.currentTarget.nextElementSibling;
+                                                            if (fallback) {
+                                                                (fallback as HTMLElement).style.display = 'flex';
+                                                            }
+                                                        }}
+                                                    />
+                                                ) : null;
+                                            })()}
+                                            <div className="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white font-semibold border-2 border-white" style={{ display: (chatInfo as User).profilePicture ? 'none' : 'flex' }}>
+                                                {(chatInfo as User).name.substring(0, 2).toUpperCase()}
+                                            </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-semibold text-white truncate">{(chatInfo as User).name}</p>
                                                 <p className="text-xs text-white text-opacity-90 truncate">{(chatInfo as User).jobTitle}</p>
@@ -1476,59 +1507,62 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ isGroup = false, chatId: propCh
 
             {/* Input Area */}
             {!showVoiceRecorder && (
-                <div className="bg-white border-t border-[#e5e5e5] px-3 py-2 flex items-center gap-2 shadow-lg chat-input-area flex-shrink-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}>
-                    <button
-                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        className="w-10 h-10 md:w-9 md:h-9 rounded-full flex items-center justify-center text-xl text-[#6b7280] active:bg-[#f3f4f6] transition-colors touch-manipulation"
-                    >
-                        <FaSmile className="text-lg" />
-                    </button>
+                <div className="relative bg-white md:border-t md:border-[#e5e5e5] px-2 md:px-3 py-2 md:py-2 flex items-center gap-2 shadow-lg chat-input-area flex-shrink-0 rounded-t-[24px] md:rounded-t-none" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}>
+                    {/* Mobile: Single rounded container with all elements inside */}
+                    <div className="w-full flex items-center gap-1.5 md:gap-2 bg-[#f3f4f6] dark:bg-gray-700 rounded-[24px] md:rounded-[20px] px-2 md:px-0 py-1.5 md:py-0">
+                        <button
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            className="w-10 h-10 md:w-9 md:h-9 rounded-full flex items-center justify-center text-xl text-[#6b7280] active:bg-[#e5e5e5] dark:active:bg-gray-600 transition-colors touch-manipulation flex-shrink-0"
+                        >
+                            <FaSmile className="text-lg" />
+                        </button>
 
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*,video/*,.pdf,.doc,.docx"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                    />
-
-                    <form onSubmit={sendMessage} className="flex-1 flex items-center min-w-0">
                         <input
-                            type="text"
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            placeholder="Type a message..."
-                            className="flex-1 h-10 md:h-10 rounded-[20px] border-none px-4 text-[15px] bg-[#f3f4f6] focus:outline-none focus:bg-[#e5e5e5] transition-colors min-w-0"
-                            style={{ fontSize: '16px' }} // Prevents zoom on iOS
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*,video/*,.pdf,.doc,.docx"
+                            onChange={handleFileUpload}
+                            className="hidden"
                         />
-                    </form>
 
-                    <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="w-10 h-10 md:w-9 md:h-9 rounded-full flex items-center justify-center text-xl text-[#6b7280] active:bg-[#f3f4f6] transition-colors touch-manipulation flex-shrink-0"
-                    >
-                        <FaPaperclip className="text-lg" />
-                    </button>
+                        <form onSubmit={sendMessage} className="flex-1 flex items-center min-w-0">
+                            <input
+                                type="text"
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                placeholder="Type a message..."
+                                className="flex-1 h-8 md:h-10 border-none px-2 md:px-4 text-[15px] bg-transparent focus:outline-none transition-colors min-w-0"
+                                style={{ fontSize: '16px' }} // Prevents zoom on iOS
+                            />
+                        </form>
 
-                    {newMessage.trim() ? (
                         <button
-                            onClick={(e) => {
-                                e.preventDefault();
-                                sendMessage();
-                            }}
-                            className="w-10 h-10 rounded-full border-none bg-gradient-to-br from-[#005d99] to-[#17a74a] text-white flex items-center justify-center text-lg shadow-lg active:scale-95 transition-transform touch-manipulation flex-shrink-0"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-10 h-10 md:w-9 md:h-9 rounded-full flex items-center justify-center text-xl text-[#6b7280] active:bg-[#e5e5e5] dark:active:bg-gray-600 transition-colors touch-manipulation flex-shrink-0"
                         >
-                            <FaPaperPlane className="text-sm" />
+                            <FaPaperclip className="text-lg" />
                         </button>
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={() => setShowVoiceRecorder(true)}
-                            className="w-10 h-10 md:w-9 md:h-9 rounded-full flex items-center justify-center text-xl text-[#6b7280] active:bg-[#f3f4f6] transition-colors touch-manipulation flex-shrink-0"
-                        >
-                            <FaMicrophone className="text-lg" />
-                        </button>
-                    )}
+
+                        {newMessage.trim() ? (
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    sendMessage();
+                                }}
+                                className="w-10 h-10 rounded-full border-none bg-gradient-to-br from-[#005d99] to-[#17a74a] text-white flex items-center justify-center text-lg shadow-lg active:scale-95 transition-transform touch-manipulation flex-shrink-0"
+                            >
+                                <FaPaperPlane className="text-sm" />
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => setShowVoiceRecorder(true)}
+                                className="w-10 h-10 md:w-9 md:h-9 rounded-full flex items-center justify-center text-xl text-[#6b7280] active:bg-[#e5e5e5] dark:active:bg-gray-600 transition-colors touch-manipulation flex-shrink-0"
+                            >
+                                <FaMicrophone className="text-lg" />
+                            </button>
+                        )}
+                    </div>
 
                     {showEmojiPicker && (
                         <div className="absolute bottom-full left-0 mb-2 z-20 w-full max-w-[calc(100vw-24px)] md:max-w-md">
@@ -1588,17 +1622,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ isGroup = false, chatId: propCh
                                                     onClick={() => handleForwardTo(user.id, false)}
                                                     className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors"
                                                 >
-                                                    {user.profilePicture ? (
-                                                        <img
-                                                            src={user.profilePicture}
-                                                            alt={user.name}
-                                                            className="w-12 h-12 rounded-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#005d99] to-[#17a74a] flex items-center justify-center text-white font-semibold">
-                                                            {user.name.charAt(0).toUpperCase()}
-                                                        </div>
-                                                    )}
+                                                    {(() => {
+                                                        const profilePictureUrl = getImageUrl(user.profilePicture);
+                                                        return profilePictureUrl ? (
+                                                            <img
+                                                                src={profilePictureUrl}
+                                                                alt={user.name}
+                                                                className="w-12 h-12 rounded-full object-cover"
+                                                                onError={(e) => {
+                                                                    e.currentTarget.style.display = 'none';
+                                                                    const fallback = e.currentTarget.nextElementSibling;
+                                                                    if (fallback) {
+                                                                        (fallback as HTMLElement).style.display = 'flex';
+                                                                    }
+                                                                }}
+                                                            />
+                                                        ) : null;
+                                                    })()}
+                                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#005d99] to-[#17a74a] flex items-center justify-center text-white font-semibold" style={{ display: user.profilePicture ? 'none' : 'flex' }}>
+                                                        {user.name.charAt(0).toUpperCase()}
+                                                    </div>
                                                     <div className="flex-1 text-left min-w-0">
                                                         <h3 className="font-semibold text-gray-900 truncate">
                                                             {user.name}

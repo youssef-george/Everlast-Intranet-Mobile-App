@@ -8,6 +8,7 @@ import type { ChatPreview, Message } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import ChatWindow from './ChatWindow';
+import { getImageUrl } from '../utils/imageUtils';
 
 const MessagesPage: React.FC = () => {
     const navigate = useNavigate();
@@ -239,7 +240,7 @@ const MessagesPage: React.FC = () => {
     }
 
     return (
-        <div className="flex flex-col md:flex-row h-full bg-[#f5f5f5] overflow-hidden pt-16">
+        <div className="flex flex-col md:flex-row h-full bg-[#f5f5f5] overflow-hidden pt-0 md:pt-16">
             {/* Left Panel - Conversations List (Always Visible) */}
             <div className={`${selectedChatId ? 'hidden md:flex' : 'flex'} md:w-[360px] border-r border-[#e5e5e5] flex-col bg-white h-full overflow-hidden`}>
                 {/* Search Header */}
@@ -286,17 +287,29 @@ const MessagesPage: React.FC = () => {
                                     >
                                         {/* Avatar */}
                                         <div className="relative flex-shrink-0">
-                                            {(chatPartner as { picture?: string; profilePicture?: string }).picture || (chatPartner as { profilePicture?: string }).profilePicture ? (
-                                                <img
-                                                    src={(chatPartner as { picture?: string; profilePicture?: string }).picture || (chatPartner as { profilePicture?: string }).profilePicture}
-                                                    alt={chatPartner.name}
-                                                    className="w-12 h-12 rounded-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#005d99] to-[#17a74a] flex items-center justify-center text-white font-semibold text-sm">
-                                                    {getInitials(chatPartner.name)}
-                                                </div>
-                                            )}
+                                            {(() => {
+                                                const pictureUrl = getImageUrl(
+                                                    (chatPartner as { picture?: string; profilePicture?: string }).picture || 
+                                                    (chatPartner as { profilePicture?: string }).profilePicture
+                                                );
+                                                return pictureUrl ? (
+                                                    <img
+                                                        src={pictureUrl}
+                                                        alt={chatPartner.name}
+                                                        className="w-12 h-12 rounded-full object-cover"
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                            const fallback = e.currentTarget.nextElementSibling;
+                                                            if (fallback) {
+                                                                (fallback as HTMLElement).style.display = 'flex';
+                                                            }
+                                                        }}
+                                                    />
+                                                ) : null;
+                                            })()}
+                                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#005d99] to-[#17a74a] flex items-center justify-center text-white font-semibold text-sm" style={{ display: ((chatPartner as { picture?: string; profilePicture?: string }).picture || (chatPartner as { profilePicture?: string }).profilePicture) ? 'none' : 'flex' }}>
+                                                {getInitials(chatPartner.name)}
+                                            </div>
                                             {chat.isOnline && !chat.isGroup && (
                                                 <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#17a74a] rounded-full border-2 border-white"></div>
                                             )}

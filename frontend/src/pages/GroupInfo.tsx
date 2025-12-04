@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import api from '../services/api';
 import type { Group, User, Message } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { getImageUrl } from '../utils/imageUtils';
 
 const GroupInfo: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -99,7 +100,7 @@ const GroupInfo: React.FC = () => {
     );
 
     return (
-        <div className="flex flex-col h-full bg-secondary dark:bg-dark-bg overflow-y-auto pt-16">
+        <div className="flex flex-col h-full bg-secondary dark:bg-dark-bg overflow-y-auto pt-0 md:pt-16">
             <div className="bg-white dark:bg-dark-paper p-6 flex flex-col items-center shadow-sm">
                 {group.picture ? (
                     <img
@@ -135,17 +136,26 @@ const GroupInfo: React.FC = () => {
                     {group.members?.map((member) => (
                         <div key={member.id} className="p-4 flex items-center justify-between">
                             <div className="flex items-center flex-1 min-w-0">
-                                {member.user?.profilePicture ? (
-                                    <img
-                                        src={member.user.profilePicture}
-                                        alt={member.user.name}
-                                        className="w-10 h-10 rounded-full object-cover mr-3 flex-shrink-0"
-                                    />
-                                ) : (
-                                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3 flex-shrink-0">
-                                        {member.user?.name?.charAt(0) || 'U'}
-                                    </div>
-                                )}
+                                {(() => {
+                                    const profilePictureUrl = getImageUrl(member.user?.profilePicture);
+                                    return profilePictureUrl ? (
+                                        <img
+                                            src={profilePictureUrl}
+                                            alt={member.user.name}
+                                            className="w-10 h-10 rounded-full object-cover mr-3 flex-shrink-0"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                                const fallback = e.currentTarget.nextElementSibling;
+                                                if (fallback) {
+                                                    (fallback as HTMLElement).style.display = 'flex';
+                                                }
+                                            }}
+                                        />
+                                    ) : null;
+                                })()}
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#005d99] to-[#17a74a] flex items-center justify-center text-white font-semibold text-xs mr-3 flex-shrink-0" style={{ display: member.user?.profilePicture ? 'none' : 'flex' }}>
+                                    {member.user?.name?.substring(0, 2).toUpperCase() || 'U'}
+                                </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="font-medium text-gray-900 dark:text-dark-text truncate">
                                         {member.user?.name} {member.userId === currentUser?.id && '(You)'}
@@ -192,17 +202,26 @@ const GroupInfo: React.FC = () => {
                                 className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-hover transition-colors"
                             >
                                 <div className="flex items-start space-x-3">
-                                    {message.sender?.profilePicture ? (
-                                        <img
-                                            src={message.sender.profilePicture}
-                                            alt={message.sender.name}
-                                            className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                                        />
-                                    ) : (
-                                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                                            {message.sender?.name?.charAt(0) || 'U'}
-                                        </div>
-                                    )}
+                                    {(() => {
+                                        const profilePictureUrl = getImageUrl(message.sender?.profilePicture);
+                                        return profilePictureUrl ? (
+                                            <img
+                                                src={profilePictureUrl}
+                                                alt={message.sender.name}
+                                                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = 'none';
+                                                    const fallback = e.currentTarget.nextElementSibling;
+                                                    if (fallback) {
+                                                        (fallback as HTMLElement).style.display = 'flex';
+                                                    }
+                                                }}
+                                            />
+                                        ) : null;
+                                    })()}
+                                    <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0" style={{ display: message.sender?.profilePicture ? 'none' : 'flex' }}>
+                                        {message.sender?.name?.charAt(0) || 'U'}
+                                    </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center space-x-2 mb-1">
                                             <p className="text-sm font-medium text-gray-900 dark:text-dark-text">
@@ -261,17 +280,26 @@ const GroupInfo: React.FC = () => {
                                         onClick={() => addMemberMutation.mutate(user.id)}
                                         className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer"
                                     >
-                                        {user.profilePicture ? (
-                                            <img
-                                                src={user.profilePicture}
-                                                alt={user.name}
-                                                className="w-10 h-10 rounded-full object-cover mr-3"
-                                            />
-                                        ) : (
-                                            <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
-                                                {user.name.charAt(0)}
-                                            </div>
-                                        )}
+                                        {(() => {
+                                            const profilePictureUrl = getImageUrl(user.profilePicture);
+                                            return profilePictureUrl ? (
+                                                <img
+                                                    src={profilePictureUrl}
+                                                    alt={user.name}
+                                                    className="w-10 h-10 rounded-full object-cover mr-3"
+                                                    onError={(e) => {
+                                                        e.currentTarget.style.display = 'none';
+                                                        const fallback = e.currentTarget.nextElementSibling;
+                                                        if (fallback) {
+                                                            (fallback as HTMLElement).style.display = 'flex';
+                                                        }
+                                                    }}
+                                                />
+                                            ) : null;
+                                        })()}
+                                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3" style={{ display: user.profilePicture ? 'none' : 'flex' }}>
+                                            {user.name.charAt(0)}
+                                        </div>
                                         <div className="flex-1">
                                             <p className="text-gray-900 dark:text-dark-text font-medium">{user.name}</p>
                                             <p className="text-xs text-gray-500 dark:text-gray-400">{user.jobTitle}</p>

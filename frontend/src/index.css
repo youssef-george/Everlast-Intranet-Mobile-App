@@ -45,6 +45,14 @@
 }
 
 @layer components {
+  /* Mobile search input - centered text and placeholder */
+  @media (max-width: 767px) {
+    input[type="text"].mobile-centered,
+    input[type="text"].mobile-centered::placeholder {
+      text-align: center !important;
+    }
+  }
+  
   .btn-primary {
     @apply bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
   }

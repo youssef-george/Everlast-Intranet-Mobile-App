@@ -64,5 +64,35 @@ export class NotificationsService {
             },
         });
     }
+
+    async markNotificationsAsReadByLink(userId: string, link: string) {
+        return this.prisma.notification.updateMany({
+            where: {
+                userId,
+                link,
+                isRead: false,
+            },
+            data: { isRead: true },
+        });
+    }
+
+    async markMessageNotificationsAsRead(userId: string, chatId: string) {
+        // Mark all MESSAGE type notifications that are related to this chat
+        // This handles cases where the link might be slightly different or we want to be more flexible
+        const result = await this.prisma.notification.updateMany({
+            where: {
+                userId,
+                type: 'MESSAGE',
+                isRead: false,
+                OR: [
+                    { link: `/chats/${chatId}` },
+                    { link: `/messages/${chatId}` },
+                ],
+            },
+            data: { isRead: true },
+        });
+        console.log(`✅ Marked ${result.count} additional MESSAGE notifications as read for user ${userId}, chat ${chatId}`);
+        return result;
+    }
 }
 

@@ -5,6 +5,7 @@ import api from '../services/api';
 import type { User } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { getImageUrl } from '../utils/imageUtils';
 
 // Helper function to get API base URL (same logic as in api.ts)
 const getApiBaseURL = () => {
@@ -146,18 +147,27 @@ const Profile: React.FC = () => {
     if (!currentUser) return null;
 
     return (
-        <div className="flex flex-col h-full bg-gray-50 dark:bg-dark-bg overflow-y-auto pb-20 md:pb-0 pt-16">
+        <div className="flex flex-col h-full bg-gray-50 dark:bg-dark-bg overflow-y-auto pb-20 md:pb-0 pt-0 md:pt-16">
             <div className="bg-white dark:bg-dark-paper p-6 flex flex-col items-center shadow-sm mb-4">
                 <div className="relative mb-4">
-                    {currentUser.profilePicture ? (
-                        <img
-                            src={currentUser.profilePicture}
-                            alt={currentUser.name}
-                            className="w-24 h-24 rounded-full object-cover"
-                        />
-                    ) : (
-                        <FaUserCircle className="w-24 h-24 text-gray-400" />
-                    )}
+                    {(() => {
+                        const profilePictureUrl = getImageUrl(currentUser.profilePicture);
+                        return profilePictureUrl ? (
+                            <img
+                                src={profilePictureUrl}
+                                alt={currentUser.name}
+                                className="w-24 h-24 rounded-full object-cover"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const fallback = e.currentTarget.nextElementSibling;
+                                    if (fallback) {
+                                        (fallback as HTMLElement).style.display = 'block';
+                                    }
+                                }}
+                            />
+                        ) : null;
+                    })()}
+                    <FaUserCircle className="w-24 h-24 text-gray-400" style={{ display: currentUser.profilePicture ? 'none' : 'block' }} />
                     <button
                         onClick={handleEditPictureClick}
                         disabled={isUploading}
@@ -292,11 +302,26 @@ const Profile: React.FC = () => {
                                 onClick={() => loginAs(user.id)}
                                 className="flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-left"
                             >
-                                <img
-                                    src={user.profilePicture || `https://ui-avatars.com/api/?name=${user.name}`}
-                                    alt={user.name}
-                                    className="w-8 h-8 rounded-full object-cover mr-3"
-                                />
+                                {(() => {
+                                    const profilePictureUrl = getImageUrl(user.profilePicture);
+                                    return profilePictureUrl ? (
+                                        <img
+                                            src={profilePictureUrl}
+                                            alt={user.name}
+                                            className="w-8 h-8 rounded-full object-cover mr-3"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                                const fallback = e.currentTarget.nextElementSibling;
+                                                if (fallback) {
+                                                    (fallback as HTMLElement).style.display = 'flex';
+                                                }
+                                            }}
+                                        />
+                                    ) : null;
+                                })()}
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#005d99] to-[#17a74a] flex items-center justify-center text-white font-semibold text-xs mr-3" style={{ display: user.profilePicture ? 'none' : 'flex' }}>
+                                    {user.name.substring(0, 2).toUpperCase()}
+                                </div>
                                 <div>
                                     <p className="text-sm font-medium text-gray-900 dark:text-dark-text">{user.name}</p>
                                     <p className="text-xs text-gray-500 dark:text-dark-muted">{user.role}</p>

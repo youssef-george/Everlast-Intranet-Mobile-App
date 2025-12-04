@@ -4,11 +4,11 @@ import { FaUsers, FaComment, FaUser, FaBuilding, FaBell } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { useNotifications } from '../context/NotificationsContext';
+import { useNotificationsSafe } from '../context/NotificationsContext';
 
 const BottomNav: React.FC = () => {
     const { currentUser } = useAuth();
-    const { unreadCount: unreadNotificationsCount } = useNotifications();
+    const { unreadCount: unreadNotificationsCount } = useNotificationsSafe();
     const location = useLocation();
 
     // Hide bottom nav when in a chat window on mobile
