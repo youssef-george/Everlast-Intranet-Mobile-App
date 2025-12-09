@@ -3,7 +3,6 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { existsSync } from 'fs';
 import { Request, Response } from 'express';
 import { AllExceptionsFilter } from './common/http-exception.filter';
 
@@ -58,56 +57,6 @@ async function bootstrap() {
     app.useStaticAssets(join(__dirname, '..', 'uploads'), {
         prefix: '/uploads/',
     });
-
-    // Serve frontend static files in production
-    // Try multiple possible paths for the public directory
-    const possiblePaths = [
-        join(__dirname, '..', 'public'),           // /app/backend/dist/../public = /app/backend/public
-        join(__dirname, '..', '..', 'public'),     // /app/backend/dist/../../public = /app/public
-        join(process.cwd(), 'public'),              // /app/backend/public (if cwd is backend)
-        '/app/backend/public',                      // Absolute path in container
-    ];
-    
-    let publicPath = '';
-    for (const p of possiblePaths) {
-        console.log(`🔍 Checking public path: ${p}, exists: ${existsSync(p)}`);
-        if (existsSync(p)) {
-            publicPath = p;
-            break;
-        }
-    }
-    
-    if (publicPath) {
-        console.log(`✅ Serving static files from: ${publicPath}`);
-        app.useStaticAssets(publicPath, {
-            index: 'index.html',
-        });
-        
-        // Handle SPA routing - serve index.html for all non-API routes
-        // Root path (/) is handled by static assets above, so we skip it here
-        app.use((req, res, next) => {
-            // Skip API routes, socket.io, uploads, and health check endpoints
-            if (req.path.startsWith('/api') || 
-                req.path.startsWith('/socket.io') || 
-                req.path.startsWith('/uploads') ||
-                req.path === '/health') {
-                return next();
-            }
-            
-            // Serve index.html for all other routes (SPA routing)
-            // This includes root path if static assets didn't handle it
-            console.log(`📄 Serving index.html for SPA route: ${req.path}`);
-            res.sendFile(join(publicPath, 'index.html'), (err) => {
-                if (err) {
-                    console.error(`❌ Error serving index.html for ${req.path}:`, err.message);
-                    res.status(404).send('Not found');
-                }
-            });
-        });
-    } else {
-        console.warn('⚠️ No public directory found! Frontend will not be served.');
-        console.warn('Checked paths:', possiblePaths);
-    }
 
     const port = process.env.PORT || 3001;
     console.log(`🔧 Starting server on port: ${port}`);

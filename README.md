@@ -10,20 +10,10 @@ Internal communication and collaboration platform for Everlast employees.
 - **Groups**: Create and manage team groups
 - **Notifications**: Real-time notifications for messages and updates
 - **File Sharing**: Upload and share files in conversations
-- **Progressive Web App (PWA)**: Installable app with offline support (Web)
 - **Mobile App**: Native Android app built with React Native
 - **Dark Mode**: Theme support for better user experience
 
 ## 🛠️ Tech Stack
-
-### Frontend
-- **React** with TypeScript
-- **Vite** for build tooling
-- **React Router** for navigation
-- **Socket.IO Client** for real-time communication
-- **Tailwind CSS** for styling
-- **VitePWA** for PWA capabilities
-- **React Query** for data fetching
 
 ### Backend
 - **NestJS** framework
@@ -55,14 +45,12 @@ Internal communication and collaboration platform for Everlast employees.
    # Or run: cd backend && npm run start:dev
    ```
 
-2. **Start Frontend:**
+2. **Start Mobile App:**
    ```bash
-   # Double-click start-frontend.bat
-   # Or run: cd frontend && npm run dev
+   cd mobile
+   npm install
+   npm run android
    ```
-
-3. **Open Browser:**
-   - Navigate to: `http://localhost:5173`
 
 ### Manual Setup
 
@@ -77,16 +65,6 @@ npm run start:dev
 ```
 
 Backend runs on: `http://localhost:3001`
-
-#### Frontend Setup
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Frontend runs on: `http://localhost:5173`
 
 #### Mobile App Setup (Android)
 
@@ -113,14 +91,6 @@ Everlast-Intranet/
 │   │   │   └── ...
 │   │   └── main.ts       # Application entry
 │   └── prisma/           # Database schema
-├── frontend/             # React web frontend
-│   ├── src/
-│   │   ├── components/   # React components
-│   │   ├── pages/        # Page components
-│   │   ├── context/      # React contexts
-│   │   ├── services/     # API services
-│   │   └── types/        # TypeScript types
-│   └── public/           # Static assets
 ├── mobile/               # React Native mobile app
 │   ├── android/          # Android native code
 │   ├── src/
@@ -132,7 +102,6 @@ Everlast-Intranet/
 │   │   └── types/        # TypeScript types
 │   └── App.tsx           # Main app component
 ├── start-backend.bat     # Backend startup script
-├── start-frontend.bat    # Frontend startup script
 └── RUN_LOCALLY.md        # Detailed setup guide
 ```
 
@@ -153,15 +122,6 @@ npm run prisma:migrate # Run database migrations
 npm run prisma:seed    # Seed database
 ```
 
-### Frontend Commands
-
-```bash
-npm run dev            # Start development server
-npm run build          # Build for production
-npm run preview        # Preview production build
-npm run lint           # Run ESLint
-```
-
 ### Mobile App Commands
 
 ```bash
@@ -179,8 +139,6 @@ DATABASE_URL="file:./prisma/dev.db"
 PORT=3001
 ```
 
-### Frontend
-No environment variables required for development.
 
 ## 🗄️ Database
 
@@ -195,12 +153,12 @@ backend/prisma/dev.db
 
 Currently uses mock authentication. Replace with your authentication system in production.
 
-## 📱 PWA Features
+## 📱 Mobile App
 
-- Installable on mobile and desktop
-- Offline support with service workers
+- Native Android app built with React Native
+- Real-time communication via Socket.IO
+- Offline support with AsyncStorage
 - Push notifications (configure in production)
-- App-like experience
 
 ## 🐛 Troubleshooting
 

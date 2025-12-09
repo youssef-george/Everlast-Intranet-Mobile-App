@@ -6,41 +6,33 @@ echo   Restarting Everlast Intranet App
 echo ========================================
 echo.
 
-REM Kill existing processes on ports 3001 and 5173
-echo [1/3] Stopping existing servers...
+REM Kill existing processes on port 3001
+echo [1/2] Stopping existing backend server...
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":3001"') do (
     taskkill /PID %%a /F >nul 2>&1
 )
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":5173"') do (
-    taskkill /PID %%a /F >nul 2>&1
-)
 timeout /t 2 /nobreak >nul
-echo ✅ Existing servers stopped
+echo ✅ Existing server stopped
 echo.
 
 REM Start backend
-echo [2/3] Starting backend server...
+echo [2/2] Starting backend server...
 start "Everlast Backend" cmd /k "cd /d %~dp0backend && npm run start:dev"
 timeout /t 3 /nobreak >nul
 echo ✅ Backend server starting on http://localhost:3001
 echo.
 
-REM Start frontend
-echo [3/3] Starting frontend server...
-start "Everlast Frontend" cmd /k "cd /d %~dp0frontend && npm run dev"
-timeout /t 3 /nobreak >nul
-echo ✅ Frontend server starting on http://localhost:5173
-echo.
-
 echo ========================================
-echo   ✅ App Restarted Successfully!
+echo   ✅ Backend Restarted Successfully!
 echo ========================================
 echo.
-echo Backend: http://localhost:3001
-echo Frontend: http://localhost:5173
+echo Backend API: http://localhost:3001/api
 echo.
-echo Two new windows have opened for the servers.
-echo Close them to stop the servers.
+echo Note: This is a mobile app backend.
+echo Use the React Native mobile app to connect.
+echo.
+echo A new window has opened for the backend server.
+echo Close it to stop the server.
 echo.
 pause
 
