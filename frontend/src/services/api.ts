@@ -53,7 +53,15 @@ api.interceptors.response.use(
             (error.response?.status === 404 && !isOptionalEndpoint);
         
         if (!isConnectionIssue) {
-            console.error('API Error:', error.response?.data || error.message);
+            const errorData = error.response?.data;
+            const errorMessage = errorData?.message || errorData?.error || error.message || 'Unknown error';
+            const errorStatus = error.response?.status;
+            console.error('API Error:', {
+                status: errorStatus,
+                message: errorMessage,
+                data: errorData,
+                url: error.config?.url
+            });
         }
         
         return Promise.reject(error);

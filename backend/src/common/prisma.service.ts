@@ -8,7 +8,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     async onModuleInit() {
         try {
             const databaseUrl = process.env.DATABASE_URL ? 
-                process.env.DATABASE_URL.replace(/:[^:@]+@/, ':****@') : // Hide password in logs
+                (process.env.DATABASE_URL.startsWith('file:') 
+                    ? process.env.DATABASE_URL 
+                    : process.env.DATABASE_URL.replace(/:[^:@]+@/, ':****@')) : // Hide password in logs for non-file URLs
                 'NOT SET';
             this.logger.log(`🔌 Attempting to connect to database...`);
             this.logger.log(`📡 Database URL present: ${process.env.DATABASE_URL ? 'YES' : 'NO'}`);

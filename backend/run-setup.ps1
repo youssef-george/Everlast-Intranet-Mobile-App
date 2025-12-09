@@ -1,6 +1,6 @@
-# PowerShell script to set up PostgreSQL database
+# PowerShell script to set up SQLite database
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Setting up PostgreSQL Database" -ForegroundColor Cyan
+Write-Host "Setting up SQLite Database" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -11,15 +11,15 @@ Set-Location -Path $PSScriptRoot
 Write-Host "[1/4] Verifying .env file..." -ForegroundColor Yellow
 if (Test-Path ".env") {
     $envContent = Get-Content .env -Raw
-    if ($envContent -match "DATABASE_URL.*postgres") {
-        Write-Host "✅ .env file contains PostgreSQL URL" -ForegroundColor Green
+    if ($envContent -match "DATABASE_URL.*file:") {
+        Write-Host "✅ .env file contains SQLite URL" -ForegroundColor Green
     } else {
-        Write-Host "⚠️  .env file exists but may not have PostgreSQL URL" -ForegroundColor Yellow
+        Write-Host "⚠️  .env file exists but may not have SQLite URL" -ForegroundColor Yellow
     }
 } else {
     Write-Host "Creating .env file..." -ForegroundColor Yellow
     @"
-DATABASE_URL="postgres://postgres:H8nwxPNqzCLLQRNT1k93Q0c165yST38CkjIeJDUZxQqWCYBfmZQArmXEPFbcf9Oc@196.219.160.253:5443/postgres?sslmode=disable"
+DATABASE_URL="file:./prisma/dev.db"
 PORT=3001
 "@ | Out-File -FilePath .env -Encoding utf8
     Write-Host "✅ .env file created" -ForegroundColor Green
@@ -27,7 +27,7 @@ PORT=3001
 Write-Host ""
 
 # Step 2: Generate Prisma client
-Write-Host "[2/4] Generating Prisma client for PostgreSQL..." -ForegroundColor Yellow
+Write-Host "[2/4] Generating Prisma client for SQLite..." -ForegroundColor Yellow
 npx prisma generate
 if ($LASTEXITCODE -ne 0) {
     Write-Host "❌ Failed to generate Prisma client" -ForegroundColor Red
@@ -37,7 +37,7 @@ Write-Host "✅ Prisma client generated" -ForegroundColor Green
 Write-Host ""
 
 # Step 3: Push schema to database
-Write-Host "[3/4] Pushing schema to PostgreSQL database..." -ForegroundColor Yellow
+Write-Host "[3/4] Pushing schema to SQLite database..." -ForegroundColor Yellow
 npx prisma db push --accept-data-loss
 if ($LASTEXITCODE -ne 0) {
     Write-Host "❌ Failed to push schema to database" -ForegroundColor Red

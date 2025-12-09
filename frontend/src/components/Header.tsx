@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaSearch } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import SearchBar from './SearchBar';
@@ -8,6 +9,7 @@ import { getImageUrl } from '../utils/imageUtils';
 const Header: React.FC = () => {
     const { currentUser } = useAuth();
     const [showDropdown, setShowDropdown] = useState(false);
+    const navigate = useNavigate();
 
     if (!currentUser) return null;
 
@@ -23,7 +25,11 @@ const Header: React.FC = () => {
         <header className="fixed top-0 left-0 right-0 bg-white dark:bg-dark-paper border-b border-[#e5e5e5] dark:border-gray-700 z-50 shadow-sm" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 0px)' }}>
             <div className="flex items-center h-16 px-3 md:px-6 gap-2 md:gap-4">
                 {/* Logo */}
-                <div className="w-[90px] md:w-[120px] flex-shrink-0 h-8 md:h-10 flex items-center pr-3 md:pr-0">
+                <button
+                    onClick={() => navigate('/members')}
+                    className="w-[90px] md:w-[120px] flex-shrink-0 h-8 md:h-10 flex items-center pr-3 md:pr-0 cursor-pointer hover:opacity-80 transition-opacity touch-manipulation"
+                    aria-label="Go to home page"
+                >
                     {/* Mobile logo - always visible on mobile, hidden on desktop */}
                     <img
                         src="/cropped-EWMC-Logo-1.png"
@@ -70,7 +76,7 @@ const Header: React.FC = () => {
                     <span className="logo-fallback hidden text-xl md:text-2xl font-bold text-[#005d99] dark:text-[#17a74a]">
                         Everlast
                     </span>
-                </div>
+                </button>
 
                 {/* Search Bar */}
                 <div className="flex-1 min-w-0 max-w-xl mx-auto flex justify-center md:justify-start">

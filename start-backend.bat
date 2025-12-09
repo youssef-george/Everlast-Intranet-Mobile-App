@@ -1,10 +1,29 @@
 @echo off
-echo ========================================
-echo Starting Everlast Intranet Backend
-echo ========================================
+title Everlast Backend Server
 cd /d "%~dp0backend"
+
+echo ========================================
+echo STARTING EVERLAST BACKEND SERVER
+echo ========================================
 echo.
-echo [1/4] Checking dependencies...
+
+REM [1/4] Check/Create .env file
+echo [1/4] Checking .env file...
+if not exist ".env" (
+    echo Creating .env file...
+    (
+        echo DATABASE_URL=file:./prisma/dev.db
+        echo PORT=3001
+        echo JWT_SECRET=your-secret-key
+    ) > .env
+    echo .env file created
+) else (
+    echo .env file exists
+)
+echo.
+
+REM [2/4] Check dependencies
+echo [2/4] Checking dependencies...
 if not exist "node_modules" (
     echo Installing dependencies...
     call npm install
@@ -17,7 +36,9 @@ if not exist "node_modules" (
     echo Dependencies already installed
 )
 echo.
-echo [2/4] Generating Prisma client...
+
+REM [3/4] Generate Prisma client
+echo [3/4] Generating Prisma client...
 call npm run prisma:generate
 if errorlevel 1 (
     echo ERROR: Failed to generate Prisma client
@@ -25,25 +46,15 @@ if errorlevel 1 (
     exit /b 1
 )
 echo.
-echo [3/4] Checking database...
-if not exist "prisma\dev.db" (
-    echo Database not found. Running migrations...
-    call npx prisma migrate dev
-    if errorlevel 1 (
-        echo ERROR: Failed to run migrations
-        pause
-        exit /b 1
-    )
-) else (
-    echo Database exists
-)
-echo.
-echo [4/4] Starting server...
+
+REM [4/4] Start the server
+echo [4/4] Starting backend server...
 echo.
 echo ========================================
-echo Server starting on http://localhost:3001
+echo Backend running on http://localhost:3001
 echo Press Ctrl+C to stop the server
 echo ========================================
 echo.
+
 call npm run start:dev
 pause

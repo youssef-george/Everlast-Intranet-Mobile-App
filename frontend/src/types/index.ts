@@ -130,3 +130,12 @@ export interface Notification {
     link?: string;
     createdAt: string;
 }
+
+export interface QuickLink {
+    id: string;
+    name: string;
+    url: string;
+    order: number;
+    createdAt: string;
+    updatedAt: string;
+}

@@ -6,11 +6,12 @@ import { FilesModule } from './modules/files/files.module';
 import { SearchModule } from './modules/search/search.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { QuickLinksModule } from './modules/quick-links/quick-links.module';
 import { PrismaService } from './common/prisma.service';
 import { HealthController } from './health.controller';
 
 @Module({
-    imports: [UsersModule, ChatModule, GroupsModule, FilesModule, SearchModule, DepartmentsModule, NotificationsModule],
+    imports: [UsersModule, ChatModule, GroupsModule, FilesModule, SearchModule, DepartmentsModule, NotificationsModule, QuickLinksModule],
     controllers: [HealthController],
     providers: [PrismaService],
 })

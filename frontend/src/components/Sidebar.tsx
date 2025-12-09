@@ -1,10 +1,11 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { FaUsers, FaComment, FaBell, FaBuilding } from 'react-icons/fa';
+import { FaUsers, FaComment, FaBell, FaBuilding, FaLink } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNotificationsSafe } from '../context/NotificationsContext';
+import QuickLinks from './QuickLinks';
 
 const Sidebar: React.FC = () => {
     const { currentUser } = useAuth();
@@ -38,6 +39,7 @@ const Sidebar: React.FC = () => {
         { path: '/messages', icon: FaComment, label: 'Messages', badge: unreadChatsCount },
         { path: '/notifications', icon: FaBell, label: 'Notifications', badge: unreadNotificationsCount },
         ...(currentUser?.role === 'SUPER_ADMIN' ? [{ path: '/departments', icon: FaBuilding, label: 'Departments', badge: undefined }] : []),
+        { path: '/quick-links', icon: FaLink, label: 'Quick Links', badge: undefined },
     ];
 
     const isActive = (path: string) => {
@@ -80,6 +82,9 @@ const Sidebar: React.FC = () => {
                     </NavLink>
                 );
             })}
+            <div className="mt-auto border-t border-gray-200 dark:border-gray-700">
+                <QuickLinks />
+            </div>
         </aside>
     );
 };

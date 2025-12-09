@@ -205,7 +205,7 @@ const MembersDirectory: React.FC = () => {
 
             {/* Department Cards View */}
             {viewMode === 'departments' && (
-                <div className="p-8">
+                <div className="p-4 md:p-8">
                     {departments.length === 0 && (
                         <div className="text-center py-12">
                             <FaUsers className="text-6xl text-gray-300 dark:text-gray-700 mx-auto mb-4" />
@@ -220,7 +220,7 @@ const MembersDirectory: React.FC = () => {
                             )}
                         </div>
                     )}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
                         {departments.map((dept) => {
                             return (
                             <div
@@ -238,20 +238,20 @@ const MembersDirectory: React.FC = () => {
                                 }}
                                 role="button"
                                 tabIndex={0}
-                                className="bg-white dark:bg-dark-paper rounded-xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                                className="bg-white dark:bg-dark-paper rounded-xl p-3 md:p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                             >
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                                        <FaUsers className="text-2xl text-primary" />
+                                <div className="flex items-start justify-between mb-2 md:mb-4">
+                                    <div className="p-2 md:p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                                        <FaUsers className="text-lg md:text-2xl text-primary" />
                                     </div>
-                                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm font-semibold">
-                                        {dept.count} {dept.count === 1 ? 'employee' : 'employees'}
+                                    <span className="px-2 md:px-3 py-0.5 md:py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs md:text-sm font-semibold">
+                                        {dept.count}
                                     </span>
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text mb-2">
+                                <h3 className="text-sm md:text-lg font-semibold text-gray-900 dark:text-dark-text mb-1 md:mb-2">
                                     {dept.name}
                                 </h3>
-                                <p className="text-sm text-gray-600 dark:text-dark-muted">
+                                <p className="text-xs md:text-sm text-gray-600 dark:text-dark-muted hidden md:block">
                                     Click to view all members
                                 </p>
                             </div>
@@ -267,36 +267,23 @@ const MembersDirectory: React.FC = () => {
                     {/* Quick Filters (when viewing members) */}
                     {!selectedDepartment && (
                         <div className="mb-3 md:mb-6">
-                            <div className="flex gap-1.5 md:gap-3 flex-wrap">
+                            <div className="flex border-b border-gray-200 dark:border-gray-700">
                                 <button
                                     onClick={() => setFilter('all')}
-                                    className={`px-1.5 py-1 md:px-4 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-sm font-medium transition-all ${
+                                    className={`px-4 md:px-6 py-2 md:py-3 text-sm md:text-base font-medium transition-all border-b-2 ${
                                         filter === 'all'
-                                            ? 'bg-primary text-white'
-                                            : 'bg-white dark:bg-dark-paper border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary'
+                                            ? 'border-primary text-primary'
+                                            : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                                     }`}
                                 >
                                     All Employees
                                 </button>
-                                {departments.map((dept) => (
-                                    <button
-                                        key={dept.name}
-                                        onClick={() => setFilter(dept.name)}
-                                        className={`px-1.5 py-1 md:px-4 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-sm font-medium transition-all ${
-                                            filter === dept.name
-                                                ? 'bg-primary text-white'
-                                                : 'bg-white dark:bg-dark-paper border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary'
-                                        }`}
-                                    >
-                                        {dept.name} ({dept.count})
-                                    </button>
-                                ))}
                                 <button
                                     onClick={() => setFilter('online')}
-                                    className={`px-1.5 py-1 md:px-4 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-sm font-medium transition-all ${
+                                    className={`px-4 md:px-6 py-2 md:py-3 text-sm md:text-base font-medium transition-all border-b-2 ${
                                         filter === 'online'
-                                            ? 'bg-primary text-white'
-                                            : 'bg-white dark:bg-dark-paper border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary'
+                                            ? 'border-primary text-primary'
+                                            : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                                     }`}
                                 >
                                     Online Only
@@ -365,40 +352,40 @@ const MembersDirectory: React.FC = () => {
                             </div>
 
                             {/* Actions */}
-                            <div className="flex gap-1.5 md:gap-2 pt-2 md:pt-3 border-t border-gray-100 dark:border-gray-700">
+                            <div className="grid grid-cols-2 md:flex gap-2 pt-2 md:pt-3 border-t border-gray-100 dark:border-gray-700">
                                 <button
                                     onClick={(e) => handleMessage(e, user.id)}
-                                    className="flex-1 flex items-center justify-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-primary hover:bg-primary-dark text-white text-xs md:text-sm font-medium rounded-lg transition-colors"
+                                    className="w-full md:flex-1 flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-4 py-2.5 md:py-2 bg-primary hover:bg-primary-dark text-white text-sm md:text-sm font-medium rounded-lg transition-colors min-h-[44px] touch-manipulation"
                                 >
-                                    <FaComment className="text-xs" />
+                                    <FaComment className="text-sm md:text-xs" />
                                     <span className="hidden sm:inline">Message</span>
                                 </button>
                                 <button
                                     onClick={(e) => handleView(e, user.id)}
-                                    className="flex-1 flex items-center justify-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs md:text-sm font-medium rounded-lg transition-colors"
+                                    className="w-full md:flex-1 flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-4 py-2.5 md:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm md:text-sm font-medium rounded-lg transition-colors min-h-[44px] touch-manipulation"
                                 >
-                                    <FaEye className="text-xs" />
+                                    <FaEye className="text-sm md:text-xs" />
                                     <span className="hidden sm:inline">View</span>
                                 </button>
                                 {currentUser?.role === 'SUPER_ADMIN' && (
                                     <>
                                         <button
                                             onClick={(e) => handleEdit(e, user)}
-                                            className="px-2 md:px-3 py-1.5 md:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-primary rounded-lg transition-colors"
+                                            className="w-full md:w-auto px-3 py-2.5 md:py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-primary rounded-lg transition-colors min-h-[44px] md:min-w-[44px] flex items-center justify-center touch-manipulation"
                                             title="Edit"
                                         >
-                                            <FaEdit className="text-xs md:text-sm" />
+                                            <FaEdit className="text-base md:text-sm" />
                                         </button>
                                         <button
                                             onClick={(e) => handleDeactivate(e, user)}
-                                            className={`px-2 md:px-3 py-1.5 md:py-2 rounded-lg transition-colors ${
+                                            className={`w-full md:w-auto px-3 py-2.5 md:py-2 rounded-lg transition-colors min-h-[44px] md:min-w-[44px] flex items-center justify-center touch-manipulation ${
                                                 user.accountState === 'ACTIVE'
                                                     ? 'bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 text-red-500'
                                                     : 'bg-green-50 dark:bg-green-900/10 hover:bg-green-100 dark:hover:bg-green-900/20 text-green-500'
                                             }`}
                                             title={user.accountState === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                                         >
-                                            {user.accountState === 'ACTIVE' ? <FaBan className="text-xs md:text-sm" /> : <FaCheck className="text-xs md:text-sm" />}
+                                            {user.accountState === 'ACTIVE' ? <FaBan className="text-base md:text-sm" /> : <FaCheck className="text-base md:text-sm" />}
                                         </button>
                                     </>
                                 )}

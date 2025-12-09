@@ -5,6 +5,7 @@ import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { existsSync } from 'fs';
 import { Request, Response } from 'express';
+import { AllExceptionsFilter } from './common/http-exception.filter';
 
 console.log('🚀 Bootstrap function called');
 console.log('📦 Environment:', process.env.NODE_ENV);
@@ -49,6 +50,9 @@ async function bootstrap() {
             transform: true,
         }),
     );
+
+    // Add global exception filter for better error handling
+    app.useGlobalFilters(new AllExceptionsFilter());
 
     // Serve static files (uploads)
     app.useStaticAssets(join(__dirname, '..', 'uploads'), {

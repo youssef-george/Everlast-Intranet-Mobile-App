@@ -24,10 +24,10 @@ export class SearchService {
                     },
                     {
                         OR: [
-                            { name: { contains: searchTerm, mode: 'insensitive' } },
-                            { email: { contains: searchTerm, mode: 'insensitive' } },
-                            { jobTitle: { contains: searchTerm, mode: 'insensitive' } },
-                            { department: { contains: searchTerm, mode: 'insensitive' } },
+                            { name: { contains: searchTerm } },
+                            { email: { contains: searchTerm } },
+                            { jobTitle: { contains: searchTerm } },
+                            { department: { contains: searchTerm } },
                         ],
                     },
                 ],
@@ -42,7 +42,7 @@ export class SearchService {
         const groups = await this.prisma.group.findMany({
             where: {
                 OR: [
-                    { name: { contains: searchTerm, mode: 'insensitive' } },
+                    { name: { contains: searchTerm } },
                 ],
             },
             take: 10,

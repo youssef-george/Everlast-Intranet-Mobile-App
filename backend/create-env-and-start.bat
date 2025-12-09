@@ -3,7 +3,7 @@ cd /d "%~dp0"
 
 echo Creating .env file...
 (
-echo DATABASE_URL=postgres://postgres:H8nwxPNqzCLLQRNT1k93Q0c165yST38CkjIeJDUZxQqWCYBfmZQArmXEPFbcf9Oc@196.219.160.253:5443/postgres?sslmode=require
+echo DATABASE_URL=file:./prisma/dev.db
 echo PORT=3001
 echo JWT_SECRET=your-secret-key-here
 ) > .env

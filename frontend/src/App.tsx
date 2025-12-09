@@ -19,6 +19,7 @@ import GroupInfo from './pages/GroupInfo';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
 import Departments from './pages/Departments';
+import QuickLinksPage from './pages/QuickLinksPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -101,6 +102,11 @@ function AppRoutes() {
         <Route path="departments" element={
           <ProtectedRoute>
             <Departments />
+          </ProtectedRoute>
+        } />
+        <Route path="quick-links" element={
+          <ProtectedRoute>
+            <QuickLinksPage />
           </ProtectedRoute>
         } />
         <Route path="groups" element={

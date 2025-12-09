@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { FaUsers, FaComment, FaUser, FaBuilding, FaBell } from 'react-icons/fa';
+import { FaUsers, FaComment, FaUser, FaBuilding, FaBell, FaLink } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -43,7 +43,7 @@ const BottomNav: React.FC = () => {
         { path: '/members', icon: FaUsers, badge: undefined },
         { path: '/messages', icon: FaComment, badge: unreadChatsCount },
         { path: '/notifications', icon: FaBell, badge: unreadNotificationsCount },
-        ...(currentUser?.role === 'SUPER_ADMIN' ? [{ path: '/departments', icon: FaBuilding, badge: undefined }] : []),
+        { path: '/quick-links', icon: FaLink, badge: undefined },
         { path: '/profile', icon: FaUser, badge: undefined },
     ];
 

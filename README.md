@@ -10,7 +10,8 @@ Internal communication and collaboration platform for Everlast employees.
 - **Groups**: Create and manage team groups
 - **Notifications**: Real-time notifications for messages and updates
 - **File Sharing**: Upload and share files in conversations
-- **Progressive Web App (PWA)**: Installable app with offline support
+- **Progressive Web App (PWA)**: Installable app with offline support (Web)
+- **Mobile App**: Native Android app built with React Native
 - **Dark Mode**: Theme support for better user experience
 
 ## 🛠️ Tech Stack
@@ -26,15 +27,23 @@ Internal communication and collaboration platform for Everlast employees.
 
 ### Backend
 - **NestJS** framework
-- **Prisma** ORM with SQLite (development)
+- **Prisma** ORM with SQLite
 - **Socket.IO** for WebSocket connections
 - **Multer** for file uploads
 - **TypeScript** for type safety
+
+### Mobile (React Native)
+- **React Native** for Android
+- **React Navigation** for navigation
+- **React Query** for data fetching
+- **Socket.IO Client** for real-time communication
+- **AsyncStorage** for local storage
 
 ## 📋 Prerequisites
 
 - Node.js (v18 or higher)
 - npm (comes with Node.js)
+- For Mobile App: Android Studio and Android SDK (for Android development)
 
 ## 🚀 Quick Start
 
@@ -79,6 +88,18 @@ npm run dev
 
 Frontend runs on: `http://localhost:5173`
 
+#### Mobile App Setup (Android)
+
+```bash
+cd mobile
+npm install
+# For Android emulator
+npm run android
+# Or use Android Studio to build and run
+```
+
+**Note**: Make sure the backend server is running before starting the mobile app. The mobile app connects to `http://10.0.2.2:3001/api` (Android emulator) or your computer's IP address (physical device).
+
 ## 📁 Project Structure
 
 ```
@@ -92,7 +113,7 @@ Everlast-Intranet/
 │   │   │   └── ...
 │   │   └── main.ts       # Application entry
 │   └── prisma/           # Database schema
-├── frontend/             # React frontend
+├── frontend/             # React web frontend
 │   ├── src/
 │   │   ├── components/   # React components
 │   │   ├── pages/        # Page components
@@ -100,6 +121,16 @@ Everlast-Intranet/
 │   │   ├── services/     # API services
 │   │   └── types/        # TypeScript types
 │   └── public/           # Static assets
+├── mobile/               # React Native mobile app
+│   ├── android/          # Android native code
+│   ├── src/
+│   │   ├── screens/      # Screen components
+│   │   ├── components/   # React Native components
+│   │   ├── navigation/   # Navigation setup
+│   │   ├── context/      # React contexts
+│   │   ├── services/     # API services
+│   │   └── types/        # TypeScript types
+│   └── App.tsx           # Main app component
 ├── start-backend.bat     # Backend startup script
 ├── start-frontend.bat    # Frontend startup script
 └── RUN_LOCALLY.md        # Detailed setup guide
@@ -131,6 +162,14 @@ npm run preview        # Preview production build
 npm run lint           # Run ESLint
 ```
 
+### Mobile App Commands
+
+```bash
+npm run android        # Run on Android emulator/device
+npm run start          # Start Metro bundler
+npm run lint           # Run ESLint
+```
+
 ## 📝 Environment Variables
 
 ### Backend
@@ -145,10 +184,12 @@ No environment variables required for development.
 
 ## 🗄️ Database
 
-The application uses SQLite for development (via Prisma). The database file is located at:
+The application uses SQLite (via Prisma). The database file is located at:
 ```
 backend/prisma/dev.db
 ```
+
+**Note**: The database has been migrated from PostgreSQL to SQLite for local development. All database operations now use SQLite.
 
 ## 🔐 Authentication
 

@@ -55,3 +55,22 @@ uploads/*
 **/sw.js
 **/workbox-*.js
 **/registerSW.js
+
+# React Native
+mobile/android/app/build/
+mobile/android/.gradle/
+mobile/android/app/release/
+mobile/android/keystores/
+mobile/ios/build/
+mobile/ios/Pods/
+mobile/.expo/
+mobile/.expo-shared/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+.expo/
+.expo-shared/
