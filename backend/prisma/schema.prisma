@@ -176,7 +176,7 @@ model QuickLink {
   url             String
   order           Int           @default(0)
   createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @default(updatedAt())
+  updatedAt       DateTime      @updatedAt
 
   @@index([order])
 }

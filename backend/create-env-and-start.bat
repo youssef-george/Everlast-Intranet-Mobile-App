@@ -27,9 +27,9 @@ if errorlevel 1 (
     echo ========================================
     echo.
     echo This might be due to:
-    echo 1. Firewall blocking port 5443
-    echo 2. SSL certificate issues
-    echo 3. Network connectivity
+    echo 1. Database file path is incorrect
+    echo 2. Database file permissions issue
+    echo 3. Prisma client not generated (run: npm run prisma:generate)
     echo.
     pause
     exit /b 1

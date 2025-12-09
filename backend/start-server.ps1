@@ -12,7 +12,7 @@ Write-Host "[1/4] Checking .env file..." -ForegroundColor Yellow
 if (-not (Test-Path ".env")) {
     Write-Host "Creating .env file..." -ForegroundColor Yellow
     @"
-DATABASE_URL="postgres://postgres:H8nwxPNqzCLLQRNT1k93Q0c165yST38CkjIeJDUZxQqWCYBfmZQArmXEPFbcf9Oc@196.219.160.253:5443/postgres?sslmosde=disable"
+DATABASE_URL="file:./prisma/dev.db"
 PORT=3001
 "@ | Out-File -FilePath .env -Encoding utf8
     Write-Host "✅ .env file created" -ForegroundColor Green
