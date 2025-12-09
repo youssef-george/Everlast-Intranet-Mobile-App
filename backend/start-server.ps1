@@ -1,4 +1,4 @@
-# Start Backend Server with PostgreSQL
+# Start Backend Server with SQLite
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Starting Everlast Intranet Backend" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan

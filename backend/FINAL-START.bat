@@ -12,7 +12,7 @@ cd /d "%~dp0"
 REM Step 1: Create .env file
 echo [1/5] Creating .env file...
 (
-echo DATABASE_URL=postgres://postgres:H8nwxPNqzCLLQRNT1k93Q0c165yST38CkjIeJDUZxQqWCYBfmZQArmXEPFbcf9Oc@196.219.160.253:5443/postgres?sslmode=require
+echo DATABASE_URL=file:./prisma/dev.db
 echo PORT=3001
 echo JWT_SECRET=your-secret-key-change-in-production
 ) > .env
@@ -45,7 +45,7 @@ echo.
 
 REM Step 4: Test connection
 echo [4/5] Testing database connection...
-echo    Attempting to connect to PostgreSQL at 196.219.160.253:5443...
+echo    Attempting to connect to SQLite database...
 node -e "require('dotenv').config(); const { PrismaClient } = require('@prisma/client'); const p = new PrismaClient(); p.$connect().then(() => { console.log('    SUCCESS: Database connection established!'); return p.$disconnect(); }).catch(e => { console.error('    ERROR: Connection failed -', e.message); process.exit(1); });"
 
 if errorlevel 1 (
@@ -55,8 +55,8 @@ if errorlevel 1 (
     echo ========================================
     echo.
     echo Possible causes:
-    echo  1. Firewall blocking port 5443
-    echo  2. SSL/TLS certificate issues
+    echo  1. Database file path incorrect
+    echo  2. Database file permissions issue
     echo  3. Wrong credentials
     echo  4. Server not reachable
     echo.

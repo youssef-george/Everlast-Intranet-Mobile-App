@@ -20,7 +20,7 @@ echo Step 1: Database Connection
 echo ========================================
 echo.
 
-node -e "require('dotenv').config(); const { PrismaClient } = require('@prisma/client'); const p = new PrismaClient(); p.$connect().then(() => { console.log('✅ Database connected'); return p.$disconnect(); }).catch(e => { console.error('❌ Database connection failed'); console.error('Error:', e.message); console.error(''); console.error('FIX: Check your .env file and make sure PostgreSQL is running'); process.exit(1); });"
+node -e "require('dotenv').config(); const { PrismaClient } = require('@prisma/client'); const p = new PrismaClient(); p.$connect().then(() => { console.log('✅ Database connected'); return p.$disconnect(); }).catch(e => { console.error('❌ Database connection failed'); console.error('Error:', e.message); console.error(''); console.error('FIX: Check your .env file and make sure DATABASE_URL is set correctly'); process.exit(1); });"
 
 if errorlevel 1 (
     echo.

@@ -13,7 +13,7 @@ node -e "require('dotenv').config(); const { PrismaClient } = require('@prisma/c
 if errorlevel 1 (
     echo.
     echo ❌ FAILED: Cannot connect to database
-    echo 🔧 FIX: Make sure PostgreSQL is running and .env is configured correctly
+    echo 🔧 FIX: Make sure .env is configured correctly with DATABASE_URL
     echo.
     pause
     exit /b 1

@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo Verifying PostgreSQL Database Connection
+echo Verifying SQLite Database Connection
 echo ========================================
 echo.
 
