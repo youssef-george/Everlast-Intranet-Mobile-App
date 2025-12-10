@@ -35,3 +35,4 @@ const getStyles = (theme: 'light' | 'dark') => StyleSheet.create({
 
 export default Profile;
 
+

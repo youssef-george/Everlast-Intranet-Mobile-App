@@ -1,19 +1,22 @@
 {
-  "name": "everlast-intranet",
+  "name": "everlast-intranet-mobile",
   "version": "1.0.0",
-  "description": "Everlast Intranet PWA - Employee Communication Platform",
+  "description": "Everlast Intranet Mobile App - Employee Communication Platform",
   "private": true,
   "engines": {
-    "node": "22.x",
-    "npm": "10.x"
+    "node": "18.x",
+    "npm": "9.x"
   },
   "scripts": {
-    "build": "npm install --prefix backend --legacy-peer-deps && npm install --prefix frontend --legacy-peer-deps && cd backend && npx prisma generate && cd ../frontend && npm run build && cd ../backend && npm run build && mkdir -p public && cp -r ../frontend/dist/* public/",
-    "start": "cd backend && npx prisma migrate deploy && node dist/main.js"
+    "backend:install": "cd backend && npm install",
+    "backend:start": "cd backend && npm run start:dev",
+    "mobile:install": "cd mobile && npm install",
+    "mobile:android": "cd mobile && npm run android"
   },
   "keywords": [
     "intranet",
-    "pwa",
+    "mobile-app",
+    "react-native",
     "employee-communication"
   ],
   "author": "Youssef George",
